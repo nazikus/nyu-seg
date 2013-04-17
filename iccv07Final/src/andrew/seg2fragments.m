@@ -211,9 +211,7 @@ if(DEBUG_)
     if params.degub_fig; saveas(hh_, [filename_ '.fig'], 'fig'); end
     
     %pause;
-    if strcmp(params.debug_visible,'off') == true % equal
-        close(hh_);
-    end
+    %close(hh_);
     
 end
     

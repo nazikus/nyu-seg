@@ -19,7 +19,7 @@ function [bndinfo, pball] = im2superpixels(im, initseg)
   %DEBUG
   if DEBUG_
       h_ = figure('Visible','off');
-      imshow(sum(pball,3));
+      imshow(max(pball,[],3));
       if params.degub_fig
         saveas(h_, sprintf('%s%06d_a_pb.fig',consts.watershedDir,ii_), 'fig');
       end
@@ -34,7 +34,7 @@ function [bndinfo, pball] = im2superpixels(im, initseg)
   %DEBUG
   if DEBUG_
       h_ = figure('Visible','off');
-      imshow(wseg,[]);
+      imshow(wseg);
       if params.degub_fig
         saveas(h_, sprintf('%s%06d_b_watershed.fig',consts.watershedDir,ii_), 'fig');
       end
@@ -42,7 +42,7 @@ function [bndinfo, pball] = im2superpixels(im, initseg)
       close(h_);
   end
   
-  imgEdges = wseg == 0;
+  imgEdges = wseg == 0;  % edges in watershed-map are marked with 0s
   %MARKER force consistency with initseg
   if exist('initseg', 'var') && ~isempty(initseg)
       wseg = wseg + max(wseg(:))*(initseg-min(initseg(:)));
@@ -56,9 +56,9 @@ function [bndinfo, pball] = im2superpixels(im, initseg)
       h_ = figure('Visible','off');
       imshow(wseg,[]);
       if params.degub_fig
-        saveas(h_, sprintf('%s%06d_c_watershed_consist.fig',consts.watershedDir,ii_), 'fig');
+        saveas(h_, sprintf('%s%06d_c_watershed_consist_gs.fig',consts.watershedDir,ii_), 'fig');
       end
-      print(h_, '-dpng', sprintf('%s%06d_c_watershed_consist.png',consts.watershedDir,ii_));
+      print(h_, '-dpng', sprintf('%s%06d_c_watershed_consist_gs.png',consts.watershedDir,ii_));
       close(h_);
       
       h_ = figure('Visible','off');
