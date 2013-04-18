@@ -211,7 +211,7 @@ if(DEBUG_)
     if params.degub_fig; saveas(hh_, [filename_ '.fig'], 'fig'); end
     
     %pause;
-    %close(hh_);
+    close(hh_);
     
 end
     
