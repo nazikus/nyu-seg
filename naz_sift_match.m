@@ -1,132 +1,130 @@
 clear; clc; close all;
 
 addpath(genpath('.\'));
+iptsetpref('ImshowBorder','tight')
 ind_ = @(A,r,c) A(r,c); 
 
 Consts; Params;
-params.debug_visible = 'on';   % doesn't work because seg2framents.m loads Params.m again
+params.debug_visible = 'off';   % doesn't work because seg2framents.m loads Params.m again
+outDir = strcat(consts.datasetDir, consts.matchDir);
 
-cosegImgNdx = {[1 2]; [3 4]; [5 6 7]; [8]; [9]; [10 11 12] };
+for setInd = 1:15 %length(consts.matchImgId)
+idSet = consts.matchImgId{setInd};    % set of image IDs for cuurent match group (from matchImgId cell array)
+imgNum = length(idSet);               % number of images in chosen set
 
-for i = cosegImgNdx{6}
-    load(sprintf(consts.imageRgbFilename,  i), 'imgRgb');
-    load(sprintf(consts.watershedFilename, i), 'boundaryInfo');
-    %MARKER round!
-    juncs = round(boundaryInfo.junctions.position);  % round means top-right pixel from junction point
+if imgNum < 2 || imgNum > 2; continue; end; % skipping single images & triplets
+fprintf('Processing image pairs: %d, %d ...\n', idSet(1), idSet(2)); 
+
+imRgb = cell(imgNum,1); % RGB images
+im = cell(imgNum, 1);   % greyscale images 
+x  = cell(imgNum, 1);   % junction x-coordinates
+y  = cell(imgNum, 1);   % junction y-coordinates
+D  = cell(imgNum, 1);   % sift descriptors
+
+juncsIm = cell(imgNum, 1);
+edgesIm = cell(imgNum, 1);
+
+for i = 1:imgNum 
+    load(sprintf(consts.imageRgbFilename,  idSet(i)), 'imgRgb');
+    load(sprintf(consts.watershedFilename, idSet(i)), 'boundaryInfo');
+    edgesIm{i} = boundaryInfo.edges.fragments;     % edges from watershed segmentation
+    juncsIm{i} = boundaryInfo.junctions.position;  % round means top-right pixel from junction point
     imgRgb = double(imgRgb)/255; % im2double
     
-    switch i
-        case cosegImgNdx{6}(1)
-            imargb = imgRgb;
-            xa = juncs(:,1);
-            ya = juncs(:,2);
-            
-        case cosegImgNdx{6}(2)
-            imbrgb = imgRgb;
-            xb = juncs(:,1);
-            yb = juncs(:,2);
-            
-        case cosegImgNdx{6}(3)
-            imcrgb = imgRgb;
-            xc = juncs(:,1);
-            yc = juncs(:,2);
-    end    
+    %MARKER round!
+    % extracting image and its junctions coordinates
+    imRgb{i} = imgRgb;
+    im{i} = rgb2gray(imRgb{i});
+    x{i} = round(juncsIm{i}(:,1));
+    y{i} = round(juncsIm{i}(:,2));
 end
 clear imgRgb boundaryInfo;
 
-%MARKER just to avoid error at dist2 function (line 76)
-% ====================================================
-% common_len = min([length(xa),length(xb),length(xc)]);
-% %aNxs = ind_(randperm(length(xa)),1,common_len);
-% Ndx = randperm(length(xa));
-% Ndx = Ndx(1:common_len);
-% xa = xa(Ndx);
-% ya = ya(Ndx);
-% 
-% Ndx = randperm(length(xb));
-% Ndx = Ndx(1:common_len);
-% xb = xb(Ndx);
-% yb = yb(Ndx);
-% 
-% Ndx = randperm(length(xc));
-% Ndx = Ndx(1:common_len);
-% xc = xc(Ndx);
-% yc = yc(Ndx);
-% ====================================================
-%END
-
-ima = rgb2gray(imargb);
-imb = rgb2gray(imbrgb);
-imc = rgb2gray(imcrgb);
-
 % show images
-figure(100); clf;
-subplot(1,3,1); imagesc(imargb); axis image; axis off; title('Image a');
-subplot(1,3,2); imagesc(imbrgb); axis image; axis off; title('Image b');
-subplot(1,3,3); imagesc(imcrgb); axis image; axis off; title('Image c');
+h_img = figure('Visible',params.debug_visible); clf;
+for i=1:imgNum
+    subplot(1,imgNum,i);
+    imagesc(imRgb{i}); axis image; axis off; title(['Image ', num2str(idSet(i))]);    
+end
+if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_a.png', outDir, idSet(1)) ); end;
 
 % show detected points
-figure(1); clf;
-imagesc(imargb); axis image; hold on;
-plot(xa,ya,'+y');
+h_pnts = figure('Visible',params.debug_visible); clf;
+for i = 1:imgNum
+   subplot(1,imgNum,i);
+   imagesc(imRgb{i}); axis image; title(['Image ', num2str(idSet(i))]); hold on;
+   plot(juncsIm{i}(:,1),juncsIm{i}(:,2), '+y', 'MarkerSize',2);
+   edges = edgesIm{i};
+   for k = 1:length(edges)
+        plot(edges{k}(:,1), edges{k}(:,2), 'r', 'LineWidth', 0.5);
+   end
+end
+if params.debug; print(h_pnts, '-dpng', sprintf('%s\\img%06d_b.png', outDir, idSet(1)) ); end;
 
-% show all points
-figure(2); clf;
-imagesc(imbrgb); axis image; hold on;
-plot(xb,yb,'+y');
-
-% show all points
-figure(3); clf;
-imagesc(imcrgb); axis image; hold on;
-plot(xc,yc,'+y');
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Extract descriptors (heavily blurred 21xb1 patches)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-[Da,xa,ya] = ext_desc(ima,xa,ya);
-[Db,xb,yb] = ext_desc(imb,xb,yb);
-[Dc,xc,yc] = ext_desc(imc,xc,yc);
 
+for i = 1:imgNum
+   [D{i}, x{i}, y{i}] = ext_desc(im{i}, x{i}, y{i}); 
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Compute tentative matches between image 1 (a) and 2 (b) 
 % by matching local features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-rt        = 0.4;              % 1NN/2NN distance ratio threshold (between 0 and 1)
-D2        = dist2(Da',Db'); % compute pair-wise distances between descriptors
-[Y,I]     = sort(D2,2);     % sort distances
-rr        = Y(:,1)./Y(:,2); % compute D. Lowes' 1nn/2nn ratio test
-inD12     = find(rr<rt);   % take only points with a 1nn/2nn ratio below 0.8
-I         = I(inD12);       % select matched points
-xat       = xa(inD12);
-yat       = ya(inD12);
-xbt       = xb(I);
-ybt       = yb(I);
+rt        = 0.2; % 0.4          % 1NN/2NN distance ratio threshold (between 0 and 1)
+D2        = dist2(D{1}',D{2}'); % compute pair-wise distances between descriptors
+[Y,I]     = sort(D2,2);         % sort distances
+rr        = Y(:,1)./Y(:,2);     % compute D. Lowes' 1nn/2nn ratio test
+inD12     = find(rr<rt);        % take only points with a 1nn/2nn ratio below 0.8
+I         = I(inD12);           % select matched points
+xat       = x{1}(inD12);
+yat       = y{1}(inD12);
+xbt       = x{2}(I);
+ybt       = y{2}(I);
 
 % show all tentative matches
-figure(1); clf;
-imagesc(imargb); hold on;
+h_match = figure('Visible',params.debug_visible); clf;
+subplot(121);
+imshow(imRgb{1}); hold on;
 plot(xat,yat,'+g');
 hl = line([xat; xbt],[yat; ybt],'color','y');
-title('Tentative correspondences');
+title( sprintf('Tentative correspondences: img %d (rt=%1.1f)', idSet(1), rt) );
 axis off;
 
+subplot(122);
+imshow(imRgb{2}); hold on;
+plot(xbt,ybt,'og');
+title( sprintf('img %d', idSet(1)) );
+
+if params.debug; print(h_match, '-dpng', sprintf('%s\\img%06d_rt%1.1f.png', outDir, idSet(1), rt) ); end;
+
+if length(D)<5; continue; end;
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Robustly fit homography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify the inlier threshold (in noramlized image co-ordinates)
-t              = 0.3; 
+t              = 0.2; % 0.3
 [Hab, inliers] = ransacfithomography([xat; yat], [xbt; ybt], t);
 
 % show inliers
-figure(4); clf;
-imagesc(imargb); hold on;
+h_homo = figure('Visible',params.debug_visible); clf; clf;
+subplot(121);
+imshow(imRgb{1}); hold on;
 hl = line([xat(inliers); xbt(inliers)],[yat(inliers); ybt(inliers)]);
 set(hl,'color','y');
 plot(xat(inliers),yat(inliers),'+g');
-title('Inliers');
+title(sprintf('Inliers: img %d (rt=%1.1f, t=%1.1f)', idSet(1), rt, t));
+
+subplot(122); 
+imshow(imRgb{2}); hold on;
+plot(xbt(inliers),ybt(inliers),'og');
+title( sprintf('img %d', idSet(1)) );
+if params.debug; print(h_homo, '-dpng', sprintf('%s\\img%06d_rt%1.1f_t%1.1f.png', outDir, idSet(1), rt, t) ); end;
 
 
 
@@ -139,18 +137,18 @@ title('Inliers');
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Warp and composite images
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-figure(5); clf;
-bbox=[-400 1200 -200 700]   % image space for mosaic
-% warp image b to mosaic image using an identity homogrpahy
-% Image b is chosen as the reference frame
-iwb = vgg_warp_H(imbrgb, eye(3), 'linear', bbox);
-imshow(iwb); axis image;
-
-% warp image 1 to the reference mosaic frame (image 2) 
-figure(6); clf;
-iwa = vgg_warp_H(imargb, Hab, 'linear', bbox);  % warp image a to the mosaic image
-imshow(iwa); axis image;
-imagesc(double(max(iwb,iwa))); % combine images into a common mosaic (take maximum value of the two images)
+% % %     figure(5); clf;
+% % %     bbox=[-400 1200 -200 700]   % image space for mosaic
+% % %     % warp image b to mosaic image using an identity homogrpahy
+% % %     % Image b is chosen as the reference frame
+% % %     iwb = vgg_warp_H(imRgb{2}, eye(3), 'linear', bbox);
+% % %     imshow(iwb); axis image;
+% % % 
+% % %     % warp image 1 to the reference mosaic frame (image 2) 
+% % %     figure(6); clf;
+% % %     iwa = vgg_warp_H(imRgb{1}, Hab, 'linear', bbox);  % warp image a to the mosaic image
+% % %     imshow(iwa); axis image;
+% % %     imagesc(double(max(iwb,iwa))); % combine images into a common mosaic (take maximum value of the two images)
 
 
 
@@ -163,8 +161,13 @@ imagesc(double(max(iwb,iwa))); % combine images into a common mosaic (take maxim
 % 2. Robustly fit homography Hcb
 % 3. Re-estimate homography from inliers
 
-
 % ---- 
+
+if imgNum < 3
+    %pause;
+    close all;
+    continue
+end;
 
 rt        = 0.5;              % 1NN/2NN distance ratio threshold (between 0 and 1)
 D2        = dist2(Dc',Db'); % compute pair-wise distances between descriptors
@@ -172,10 +175,10 @@ D2        = dist2(Dc',Db'); % compute pair-wise distances between descriptors
 rr        = Y(:,1)./Y(:,2); % compute D. Lowes' 1nn/2nn ratio test
 inD12     = find(rr<rt);   % take only points with a 1nn/2nn ratio below 0.8
 I         = I(inD12);       % select matched points
-xct       = xc(inD12);
-yct       = yc(inD12);
-xbt       = xb(I);
-ybt       = yb(I);
+xct       = x{3}(inD12);
+yct       = y{3}(inD12);
+xbt       = x{2}(I);
+ybt       = y{2}(I);
 
 % show all tentative matches
 figure(1); clf;
@@ -225,5 +228,8 @@ figure(8); clf;
 imagesc(max(iwc,double(max(iwb,iwa)))); % combine images into a common mosaic
 axis image; axis off;
 
+% pause;
+close all;
+end
 
 

@@ -31,12 +31,15 @@ function bndinfo = processBoundaryInfo3(seg, edges, neighbors)
 %   from forward direction.  
 %
 
+
+bndinfo.edges.fragments = edges;
+
+
 %% Get basic stats
 
 e2j = neighbors.fragment_junctionlist;
 j2e = neighbors.junction_fragmentlist;
 spLR = cat(1, neighbors.fragment_segments{:});
-
 ne = numel(edges);
 nj = numel(j2e);
 nseg = max(seg(:));
