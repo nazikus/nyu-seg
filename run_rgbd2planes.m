@@ -23,7 +23,7 @@ for ii_ = 1 : consts.numImages
     continue;
   end
   
-  fprintf('Extracting plane data (%d/%d)... ', ii_, consts.numImages);
+  fprintf('Extracting plane data (%d/%d): ', ii_, consts.numImages);
   outFilename = sprintf(consts.planeDataFilename, ii_);
   if exist(outFilename, 'file') && ~OVERWRITE
     fprintf('skipping (exists), OVERWRITE=false.\n');
@@ -39,7 +39,7 @@ for ii_ = 1 : consts.numImages
       imgNormals, normalConf);
     
   save(outFilename, 'planeData');
-  fprintf('done!\n');
+  fprintf(' done!\n');
 end
 clearvars -global ii_;
 

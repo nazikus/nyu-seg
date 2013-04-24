@@ -1,3 +1,8 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%% NOTE %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%%%%%%%%%%%%%%%% THIS SCRIPT RUNS ONLY IF BOUNDARY CLASSIFIER IS TRAINED ALREADY %%%%%%%%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 clear; clc; close all;
 addpath(genpath('.\'));
 Consts;
@@ -7,12 +12,12 @@ params.debug_visible = 'on';   % doesn't work because seg2framents.m loads Param
 params.overwrite_feat = true;  %FIXIT is it necessary to re-compute features?
 params.seg.featureSet = consts.BFT_RGBD;
 OVERWRITE = true;
-segtestNdxs = [3 40 47];
+segtestNdxs = consts.useNdx;  % [3 40 47];
 
-fprintf('Starting segmentation testing for images %s.\n', sprintf('#%d ', segtestNdxs));
+fprintf('Starting segmentation for images %s.\n', sprintf('#%d ', segtestNdxs));
 load(consts.splitsPath, 'trainNdxs'); % Load the train/test split.
 global segtestDir;
-segtestDir = [consts.datasetDir 'test_seg/'];
+segtestDir = [consts.datasetDir 'naz_seg/'];
 if ~exist(segtestDir, 'dir'); mkdir(segtestDir); end
 fprintf('Results are saved to: %s\n', segtestDir);
 

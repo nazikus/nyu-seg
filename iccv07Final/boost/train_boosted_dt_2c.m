@@ -44,7 +44,7 @@ data_confidences = zeros(num_data, 1);
 aveconf = [];
 
 %DEBUG
-debug_filename = sprintf('%s%s_%s_stg%d.txt', consts.boundaryFeaturesDir, 'training_confidence', length(consts.useNdx), stage);
+debug_filename = sprintf('%ss%d_%s_stg%d.txt', consts.boundaryFeaturesDir, length(consts.useNdx), 'training_confidence', stage);
 fdebug = fopen(debug_filename, 'w');
 
 for t = 1:num_iterations

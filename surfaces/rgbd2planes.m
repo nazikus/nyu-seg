@@ -37,9 +37,11 @@ function planeData = rgbd2planes(imgRgb, imgDepthOrig, imgDepthRawOrig, ...
   normals = reshape(imgNormals, [prod(sz) 3]);
 
   %MARKER Find major planes using RANSAC
+  fprintf('RANSAC...');
   [planes, pts_idx] = xyz2planes_ransac(Xrgb, Yrgb, Zrgb, normals, measuredZ);
 
   %MARKER Align to room coordinates
+  fprintf('\b\b\b, align coordinates...');
   Rf = get_room_directions(im2double(imgRgb), [Xrgb(:) Yrgb(:) Zrgb(:)], measuredZ, normals(measuredZ .* normalConf > 0.9, :));
   
   if all(Rf(:) == 0)
@@ -64,15 +66,14 @@ function planeData = rgbd2planes(imgRgb, imgDepthOrig, imgDepthRawOrig, ...
   assert(Rf(3,3) >= 0);
   
 %   K_rgb = struct('fx', fx_rgb, 'fy', fy_rgb, 'u0', cx_rgb, 'v0', cy_rgb);
-  
   [Xf, Yf, Zf, normalsf] = rotate_scene(Rf, Xrgb, Yrgb, Zrgb, normals, planes);
 
     depthWeightInterpolated = 0.25;
   depthWeight = double(measuredZ);
   depthWeight(~measuredZ) = depthWeightInterpolated;
 
-  
   %MARKER Perform graph cut to reassign pixels to planes
+  fprintf('\b\b\b, graph cut...');
   pts3d = [Xf(:) Yf(:) Zf(:) ones(prod(sz), 1)];
   [planemap, planesf] = cut_planes_registered(im2double(imgRgb), ...
       pts_idx, pts3d, normalsf, Zrgb, depthWeight);
@@ -80,6 +81,7 @@ function planeData = rgbd2planes(imgRgb, imgDepthOrig, imgDepthRawOrig, ...
   pts3d = pts3d(:, 1:3);
 
   %MARKER get_support_surfaces()
+  fprintf('\b\b\b, interpret planes...');
   supportSurfaces = get_support_surfaces(pts3d, normalsf, sz(1), sz(2));
 
   %MARKER Infer the maximum extent of each plane and determine whether the plane is

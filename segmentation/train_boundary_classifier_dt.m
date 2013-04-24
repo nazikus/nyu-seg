@@ -58,8 +58,7 @@ function classifier = train_boundary_classifier_dt(stage, ...
   fprintf('TrainAuc: %2.1f\n', 100 * trainAuc);
   fprintf('TestAuc: %2.1f\n', 100 * testAuc);
   
-  plotFilename = sprintf(consts.boundaryClassifierPlotFilename, params.seg.featureSet, stage);
-  plotFilename = sprintf('%s_s%d.mat', plotFilename(1:end-4), length(consts.useNdx) );
+  plotFilename = sprintf(consts.boundaryClassifierPlotFilename, length(consts.useNdx), params.seg.featureSet, stage);
   
   print(h, '-dpng', plotFilename);
   

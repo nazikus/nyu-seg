@@ -14,14 +14,13 @@ if ~exist(consts.boundaryFeaturesDir, 'dir')
   mkdir(consts.boundaryFeaturesDir);
 end
 
+sampleSize = length(consts.useNdx);
 for stage = 1 : params.seg.numStages  
   %MARKER extract boundary classifier features and labels  
   extract_boundary_classifier_features_and_labels(stage, params);
 
   %MARKER Create the boundary-classification dataset.
-  % datasetFilename = sprintf(consts.boundaryFeaturesDataset, params.seg.featureSet, stage);
-  datasetFilename = sprintf(consts.boundaryFeaturesDataset, params.seg.featureSet, stage);
-  datasetFilename = sprintf('%s_s%d.mat', datasetFilename(1:end-4), length(consts.useNdx));
+  datasetFilename = sprintf(consts.boundaryFeaturesDataset, sampleSize, params.seg.featureSet, stage);
   
   if ~exist(datasetFilename, 'file') || params.overwrite_train
     [trainData, testData, trainLabels, testLabels] = ...
@@ -35,9 +34,7 @@ for stage = 1 : params.seg.numStages
   end
 
   %MARKER Train the boundary classifier.
-  % boundaryClassifierFilename = sprintf(consts.boundaryClassifierFilename, params.seg.featureSet, stage);
-  boundaryClassifierFilename = sprintf(consts.boundaryClassifierFilename, params.seg.featureSet, stage);
-  boundaryClassifierFilename = sprintf('%s_s%d.mat', boundaryClassifierFilename(1:end-4), length(consts.useNdx) );
+  boundaryClassifierFilename = sprintf(consts.boundaryClassifierFilename, sampleSize, params.seg.featureSet, stage);
   
   if ~exist(boundaryClassifierFilename, 'file') || params.overwrite_train
     classifier = train_boundary_classifier_dt(stage, trainData, trainLabels, testData, testLabels, params);
@@ -55,8 +52,8 @@ for stage = 1 : params.seg.numStages
     end
     
     fprintf('Merging regions (Image %d/%d, stage %d)... ', ii, consts.numImages, stage);
-    outFilename = sprintf(consts.boundaryInfoPostMerge, params.seg.featureSet, stage, ii);
-    if exist(outFilename, 'file') && ~params.overwrite_train
+    outFilename = sprintf(consts.boundaryInfoPostMerge, sampleSize, params.seg.featureSet, stage, ii);
+    if exist(outFilename, 'file') && ~params.overwrite_merge
       fprintf(' already exists, overwrite=false.\n');
       continue;
     end
@@ -67,14 +64,14 @@ for stage = 1 : params.seg.numStages
     if stage == 1
       boundaryInfoFilename = sprintf(consts.watershedFilename, ii);
     else
-      boundaryInfoFilename = sprintf(consts.boundaryInfoPostMerge, params.seg.featureSet, stage-1, ii);
+      boundaryInfoFilename = sprintf(consts.boundaryInfoPostMerge,  sampleSize, params.seg.featureSet, stage-1, ii);
     end
     
     load(boundaryInfoFilename, 'boundaryInfo');
     load(sprintf(consts.imageRgbFilename, ii), 'imgRgb');
     load(sprintf(consts.objectLabelsFilename, ii), 'imgObjectLabels');
     load(sprintf(consts.instanceLabelsFilename, ii), 'imgInstanceLabels');
-    load(sprintf(consts.boundaryFeaturesFilename, params.seg.featureSet, stage, ii), 'boundaryFeatures');
+    load(sprintf(consts.boundaryFeaturesFilename, sampleSize, params.seg.featureSet, stage, ii), 'boundaryFeatures');
     
     [~, instanceLabels] = get_labels_from_instances(boundaryInfo.imgRegions, imgObjectLabels, imgInstanceLabels);
     

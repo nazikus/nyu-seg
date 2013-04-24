@@ -20,15 +20,14 @@ function R = get_room_directions(imgRgb, points3d, imgValid, norms3d)
   w_surf = 0.7; %0.7;
 
   imgGray = rgb2gray(imgRgb);
-
   % get straight line pixels and parameters
   [~, lineidx] = get_straight_line_segments(imgGray, minLen);
-
+  
   % Start by getting a bunch of hypothesizes lines and planes in 3d.
   xyz_lines = get_lines_3d(lineidx, points3d, imgValid, straightnessThreshold);
   xyz_surf = get_surfaces_3d(norms3d);
   xyz_cand = [xyz_surf ; xyz_lines];
-  
+
   ty = xyz_cand(abs(xyz_cand(:, 2))>0.8, :);
   Ny = zeros(size(ty, 1)*10, 3); 
   Nx = zeros(size(ty, 1)*10, 3); 
@@ -81,7 +80,7 @@ function R = get_room_directions(imgRgb, points3d, imgValid, norms3d)
 
   [mv, mi] = max(scores);
   R = [Nx(mi, :) ; Ny(mi, :) ; Nz(mi, :)];
-  disp(num2str(R));
+  % disp(num2str(R));
 end
 
 function [xyz_lines, imgLines] = get_lines_3d(lineidx, points3d, imgValid, straightnessThreshold)
@@ -137,6 +136,7 @@ function xyz_surf = get_surfaces_3d(norms3d)
   h=0.01;
   epsilon = 0.001;
   thresh = 50;
+  %MARKER mean shift
   [mode, score] = mean_shift(norms3d', ntrails, h, epsilon, @meanshift_dist2);
   mode = mode(:, score>thresh)';
   xyz_surf = zeros(size(mode));

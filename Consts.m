@@ -13,7 +13,7 @@ consts.splitsPath = [consts.datasetDir 'splits.mat'];
 
 % The absolute path to the SPAMS framework:
 %   http://spams-devel.gforge.inria.fr/
-consts.spamsPath = 'spams-matlab/'; % c:\Users\hasnat\Desktop\Nazar\NYU\indoor_scene_seg_sup\spams-matlab\
+consts.spamsPath = 'spams-matlab/';
 
 % Whether or not to use Gurobi. If useGurobi is false, then Matlab's
 % built-in LP solver (linprog) will be used.
@@ -29,7 +29,7 @@ consts.supportLabels = [consts.datasetDir '/support_labels.mat'];
 % The total number of images in the dataset.
 consts.numImages = 1449;
 
-consts.useNdx = 1:50; % 909:1200
+consts.useNdx = 1:15; %consts.numImages; % 909:1200
 consts.useImages = false(consts.numImages, 1);
 consts.useImages(consts.useNdx) = true; 
 
@@ -131,12 +131,15 @@ consts.supportClassifier = [consts.supportFeaturesDir 'classifier_src%d_set%d_st
 consts.watershedDir = [consts.datasetDir 'watershed/'];
 consts.watershedFilename = [consts.watershedDir 'watershed_%06d.mat'];
 
-consts.boundaryFeaturesDir = [consts.datasetDir 'boundary_features/'];
-consts.boundaryFeaturesFilename = [consts.boundaryFeaturesDir 'type%d_stg%d_%06d.mat'];
-consts.boundaryFeaturesDataset = [consts.boundaryFeaturesDir 'dataset_type%d_stg%d.mat'];
-consts.boundaryInfoPostMerge = [consts.boundaryFeaturesDir 'info_type%d_stg%d_%06d.mat'];
-consts.boundaryClassifierFilename = [consts.boundaryFeaturesDir 'classifier_type%d_stg%d.mat'];
-consts.boundaryClassifierPlotFilename = [consts.boundaryFeaturesDir 'classifier_roc_type%d_stg%d.png'];
+%%%%%%%%%%%%%%%%%%%
+% MODIFIED BY NAZ %
+%%%%%%%%%%%%%%%%%%%
+consts.boundaryFeaturesDir = sprintf('%s%s/%s_%d/',consts.datasetDir, 'boundary_features', 'sample', length(consts.useNdx));
+consts.boundaryFeaturesFilename       = [consts.boundaryFeaturesDir 's%d_type%d_stg%d_%06d.mat'];
+consts.boundaryFeaturesDataset        = [consts.boundaryFeaturesDir 's%d_dataset_type%d_stg%d.mat'];
+consts.boundaryClassifierFilename     = [consts.boundaryFeaturesDir 's%d_classifier_type%d_stg%d.mat'];
+consts.boundaryClassifierPlotFilename = [consts.boundaryFeaturesDir 's%d_classifier_roc_type%d_stg%d.png'];
+consts.boundaryInfoPostMerge          = [consts.boundaryFeaturesDir 's%d_info_type%d_stg%d_%06d.mat'];
 
 %%%%%%%%%%%
 % Results %

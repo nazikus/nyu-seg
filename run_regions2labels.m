@@ -24,9 +24,6 @@ for ii_ = 1 : consts.numImages
     continue;
   end
   
-  fprintf('Running regions2labels (%d/%d)\r', ii_, consts.numImages);
-  
-  
   load(sprintf(consts.objectLabelsFilename, ii_), 'imgObjectLabels');
   load(sprintf(consts.instanceLabelsFilename, ii_), 'imgInstanceLabels');
 

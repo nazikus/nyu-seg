@@ -10,7 +10,7 @@ function extract_boundary_classifier_features_and_labels(stage, params, startNdx
     endNdx = consts.numImages;
   end
   
-  fprintf('\nExtracting boundary features for %d-%d:\n',consts.useNdx(1),consts.useNdx(end));
+  fprintf('\nExtracting boundary features for images %d-%d:\n',consts.useNdx(1),consts.useNdx(end));
   fprintf('(Be patient! Slow for the first few stages...)\n');
   for ii = startNdx : endNdx
     if ~consts.useImages(ii)
@@ -18,7 +18,7 @@ function extract_boundary_classifier_features_and_labels(stage, params, startNdx
     end
       
     fprintf('Extracting boundary features %d/%d (Stage %d)... ', ii, consts.numImages, stage);
-    boundaryFeaturesFilename = sprintf(consts.boundaryFeaturesFilename, params.seg.featureSet, stage, ii);
+    boundaryFeaturesFilename = sprintf(consts.boundaryFeaturesFilename, length(consts.useNdx), params.seg.featureSet, stage, ii);
     if exist(boundaryFeaturesFilename, 'file') && ~OVERWRITE
       fprintf('skipping (exists), overwrite=false.\n');
       continue;
@@ -27,9 +27,9 @@ function extract_boundary_classifier_features_and_labels(stage, params, startNdx
     if stage == 1
       prevBoundaryDataFilename = sprintf(consts.watershedFilename, ii);
     elseif stage <= 3 && (params.seg.featureSet == consts.BFT_RGBD_SUP || params.seg.featureSet == consts.BFT_RGBD_SUP_SC)
-      prevBoundaryDataFilename = sprintf(consts.boundaryInfoPostMerge, consts.BFT_RGBD, stage-1, ii);
+      prevBoundaryDataFilename = sprintf(consts.boundaryInfoPostMerge, length(consts.useNdx), consts.BFT_RGBD, stage-1, ii);
     else
-      prevBoundaryDataFilename = sprintf(consts.boundaryInfoPostMerge, params.seg.featureSet, stage-1, ii);
+      prevBoundaryDataFilename = sprintf(consts.boundaryInfoPostMerge, length(consts.useNdx), params.seg.featureSet, stage-1, ii);
     end
     
     load(prevBoundaryDataFilename, 'boundaryInfo');

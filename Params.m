@@ -16,8 +16,9 @@ params.overwrite_planes    = false;
 params.overwrite_watershed = false;
 params.overwrite_labels    = false;
 
-params.overwrite_feat      = true; % re-extract if train size changed (why?)
-params.overwrite_train     = true;
+params.overwrite_feat      = false; % must re-extract if train size changed !!
+params.overwrite_train     = false; % must re-extract if train size changed !!
+params.overwrite_merge     = true;  % must re-extract if train size changed !!
 
 params.overwrite_sift      = false;
 params.overwrite_dict      = false;

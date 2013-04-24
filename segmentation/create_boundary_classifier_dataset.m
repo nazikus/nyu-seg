@@ -60,7 +60,7 @@ function [trainData, testData, trainLabels, testLabels] = ...
     end
     
     fprintf('Loading boundary features (%d/%d)\r', ii, consts.numImages);
-    boundaryFeaturesFilename = sprintf(consts.boundaryFeaturesFilename, featureSet, stage, ii);
+    boundaryFeaturesFilename = sprintf(consts.boundaryFeaturesFilename, length(consts.useNdx), featureSet, stage, ii);
     load(boundaryFeaturesFilename, 'boundaryFeatures', 'boundaryLabels');
     
     assert(~any(isnan(boundaryFeatures(:))));
