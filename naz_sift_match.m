@@ -1,15 +1,19 @@
-clear; clc; close all;
+clear; clc; close all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
 
-addpath(genpath('.\'));
-iptsetpref('ImshowBorder','tight')
-ind_ = @(A,r,c) A(r,c); 
+iptsetpref('ImshowBorder','tight'); %??
 
 Consts; Params;
+params.seg.featureSet = consts.BFT_RGBD;
 params.debug_visible = 'off';   % doesn't work because seg2framents.m loads Params.m again
-outDir = strcat(consts.datasetDir, consts.matchDir);
+sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
+sampleStage = 4;
 
-for setInd = 1:15 %length(consts.matchImgId)
-idSet = consts.matchImgId{setInd};    % set of image IDs for cuurent match group (from matchImgId cell array)
+% check if classifier and corresponding hierarchical segmentation exists for given sample size
+
+
+
+for setInd = 1:length(consts.matchImgId)
+idSet = consts.matchImgId{setInd};    % set of image IDs for cuurent match group (from consts.matchImgId cell array)
 imgNum = length(idSet);               % number of images in chosen set
 
 if imgNum < 2 || imgNum > 2; continue; end; % skipping single images & triplets
@@ -26,7 +30,7 @@ edgesIm = cell(imgNum, 1);
 
 for i = 1:imgNum 
     load(sprintf(consts.imageRgbFilename,  idSet(i)), 'imgRgb');
-    load(sprintf(consts.watershedFilename, idSet(i)), 'boundaryInfo');
+    load(sprintf(consts.boundaryInfoPostMerge, sampleSize, params.seg.featureSet, sampleStage, idSet(i)), 'boundaryInfo');
     edgesIm{i} = boundaryInfo.edges.fragments;     % edges from watershed segmentation
     juncsIm{i} = boundaryInfo.junctions.position;  % round means top-right pixel from junction point
     imgRgb = double(imgRgb)/255; % im2double
@@ -46,7 +50,7 @@ for i=1:imgNum
     subplot(1,imgNum,i);
     imagesc(imRgb{i}); axis image; axis off; title(['Image ', num2str(idSet(i))]);    
 end
-if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_a.png', outDir, idSet(1)) ); end;
+if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_a.png', consts.matchDir, idSet(1)) ); end;
 
 % show detected points
 h_pnts = figure('Visible',params.debug_visible); clf;
@@ -59,7 +63,7 @@ for i = 1:imgNum
         plot(edges{k}(:,1), edges{k}(:,2), 'r', 'LineWidth', 0.5);
    end
 end
-if params.debug; print(h_pnts, '-dpng', sprintf('%s\\img%06d_b.png', outDir, idSet(1)) ); end;
+if params.debug; print(h_pnts, '-dpng', sprintf('%s\\img%06d_b.png', consts.matchDir, idSet(1)) ); end;
 
 
 
@@ -75,7 +79,7 @@ end
 % Compute tentative matches between image 1 (a) and 2 (b) 
 % by matching local features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-rt        = 0.2; % 0.4          % 1NN/2NN distance ratio threshold (between 0 and 1)
+rt        = 0.4;                 % 1NN/2NN distance ratio threshold (between 0 and 1)
 D2        = dist2(D{1}',D{2}'); % compute pair-wise distances between descriptors
 [Y,I]     = sort(D2,2);         % sort distances
 rr        = Y(:,1)./Y(:,2);     % compute D. Lowes' 1nn/2nn ratio test
@@ -100,7 +104,7 @@ imshow(imRgb{2}); hold on;
 plot(xbt,ybt,'og');
 title( sprintf('img %d', idSet(1)) );
 
-if params.debug; print(h_match, '-dpng', sprintf('%s\\img%06d_rt%1.1f.png', outDir, idSet(1), rt) ); end;
+if params.debug; print(h_match, '-dpng', sprintf('%s\\img%06d_rt%1.1f.png', consts.matchDir, idSet(1), rt) ); end;
 
 if length(D)<5; continue; end;
 
@@ -108,7 +112,7 @@ if length(D)<5; continue; end;
 % Robustly fit homography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify the inlier threshold (in noramlized image co-ordinates)
-t              = 0.2; % 0.3
+t              = 0.3;
 [Hab, inliers] = ransacfithomography([xat; yat], [xbt; ybt], t);
 
 % show inliers
@@ -124,7 +128,7 @@ subplot(122);
 imshow(imRgb{2}); hold on;
 plot(xbt(inliers),ybt(inliers),'og');
 title( sprintf('img %d', idSet(1)) );
-if params.debug; print(h_homo, '-dpng', sprintf('%s\\img%06d_rt%1.1f_t%1.1f.png', outDir, idSet(1), rt, t) ); end;
+if params.debug; print(h_homo, '-dpng', sprintf('%s\\img%06d_rt%1.1f_t%1.1f.png', consts.matchDir, idSet(1), rt, t) ); end;
 
 
 
