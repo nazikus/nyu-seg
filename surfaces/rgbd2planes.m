@@ -81,7 +81,7 @@ function planeData = rgbd2planes(imgRgb, imgDepthOrig, imgDepthRawOrig, ...
   pts3d = pts3d(:, 1:3);
 
   %MARKER get_support_surfaces()
-  fprintf('\b\b\b, interpret planes...');
+  fprintf('\b\b\b, extrapolate planes GC...');
   supportSurfaces = get_support_surfaces(pts3d, normalsf, sz(1), sz(2));
 
   %MARKER Infer the maximum extent of each plane and determine whether the plane is

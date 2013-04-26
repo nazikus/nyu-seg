@@ -29,7 +29,7 @@ consts.supportLabels = [consts.datasetDir '/support_labels.mat'];
 % The total number of images in the dataset.
 consts.numImages = 1449;
 
-consts.useNdx = 1:15; %consts.numImages; % 909:1200
+consts.useNdx = 1:100; %consts.numImages; % 909:1200
 consts.useImages = false(consts.numImages, 1);
 consts.useImages(consts.useNdx) = true; 
 
@@ -131,10 +131,13 @@ consts.supportClassifier = [consts.supportFeaturesDir 'classifier_src%d_set%d_st
 consts.watershedDir = [consts.datasetDir 'watershed/'];
 consts.watershedFilename = [consts.watershedDir 'watershed_%06d.mat'];
 
-%%%%%%%%%%%%%%%%%%%
-% MODIFIED BY NAZ %
-%%%%%%%%%%%%%%%%%%%
-consts.boundaryFeaturesDir = sprintf('%s%s/%s_%d/',consts.datasetDir, 'boundary_features', 'sample', length(consts.useNdx));
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% !!! MODIFIED BY NAZ !!! %
+%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% appending prefix to each file with indicates sample size used for training
+consts.boundaryDir = 'boundary_features/';
+consts.sampleDir   = sprintf('sample_%d/', length(consts.useNdx));
+consts.boundaryFeaturesDir = [consts.datasetDir  consts.boundaryDir consts.sampleDir];
 consts.boundaryFeaturesFilename       = [consts.boundaryFeaturesDir 's%d_type%d_stg%d_%06d.mat'];
 consts.boundaryFeaturesDataset        = [consts.boundaryFeaturesDir 's%d_dataset_type%d_stg%d.mat'];
 consts.boundaryClassifierFilename     = [consts.boundaryFeaturesDir 's%d_classifier_type%d_stg%d.mat'];
@@ -219,7 +222,8 @@ consts.MIN_PIXELS_PER_REGION = 10;
 
 % IDs of images that are considered for cosegmentation (single images
 % are not considered such). ID == image number from filename
-consts.matchDir = 'sift_matched/';
+consts.segmentDir = 'segmentation_test/';
+consts.matchDir   = [consts.datasetDir 'sift_matched/'];
 consts.matchImgId = {
     [1 2];          
     3;              

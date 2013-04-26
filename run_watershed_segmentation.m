@@ -22,10 +22,10 @@ for ii_ = 1 : consts.numImages
   fprintf('running watershed %d/%d... ', ii_, consts.numImages);
   outFilename = sprintf(consts.watershedFilename, ii_);
   if exist(outFilename, 'file') && ~OVERWRITE
-    fprintf('skipping (exists), OVERWRITE=false.\n');
+    fprintf('skipping (exists), overwrite=false.\n');
    continue;
   end
-
+  fprintf('\n');
   load(sprintf(consts.imageRgbFilename, ii_), 'imgRgb');  
   load(sprintf(consts.planeDataFilename, ii_), 'planeData');
   
