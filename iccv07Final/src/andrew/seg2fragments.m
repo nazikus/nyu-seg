@@ -196,25 +196,25 @@ if(DEBUG_)
 %             plot(polyfragments{i}(:,1), polyfragments{i}(:,2), 'r', 'LineWidth', 0.5);
 %         end
     end
-    stage_msg = '';
     if ~exist('stage', 'var')  % means that watershed segmentation script is running
         filename_ = sprintf('%s%06d_d_fragments',consts.watershedDir,ii);
         
     else  % means that heirearchical merging (train_boundary_classifier) script is running
         if stage==1 % copy initial oversegmentation image to boundary folder, just for reference
             source      = sprintf('%s%06d_d_fragments.png',consts.watershedDir,ii);
-            destination = sprintf('%s%06_fragments_stage0.png',consts.boundaryFeaturesDir,ii);
-            [status message] = copyfile(source, destination, 'f');
+            destination = sprintf('%ss%d_%06d_fragments_stage0.png', ...
+                                  consts.boundaryFeaturesDir, length(consts.useNdx), ii);
+            [status message] = copyfile(source, destination);
             %fprintf('\n**Debug** Copy command result: %d, "%s"; Source: "%s"; Dest: "%s"; **\n', status, message, source, destination);
             clear cource dest status message;
         end
-        filename_ = sprintf('%s%06_fragments_stage%d',consts.boundaryFeaturesDir,ii,stage);
+        filename_ = sprintf('%ss%d_%06d_fragments_stage%d',consts.boundaryFeaturesDir, length(consts.useNdx), ii,stage);
     end
 
     
     global segtestDir;
     if ~isempty(segtestDir)  % means that naz_segment_image.m script is running
-        filename_ = sprintf('%s%06d_d_fragments%s',segtestDir,ii,stage_msg);
+        filename_ = sprintf('%ss%d_%06d_fragments_stage%d',segtestDir,length(consts.useNdx), ii, stage);
     end       
     
     print(hh_, '-dpng', [filename_ '.png']);
