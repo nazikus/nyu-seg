@@ -4,19 +4,23 @@ iptsetpref('ImshowBorder','tight'); %??
 
 Consts; Params;
 params.seg.featureSet = consts.BFT_RGBD;
-params.debug_visible = 'off';   % doesn't work because seg2framents.m loads Params.m again
-sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-sampleStage = 4;
+params.debug_visible = 'on';   
+params.degub_fig = true;
 
-% check if classifier and corresponding hierarchical segmentation exists for given sample size
+conf.sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
+conf.sampleStage = 3;
+conf.imgGap = 20; % size of gap between the images
 
+
+% TODO check if classifier and corresponding hierarchical segmentation exists for given sample size
 
 
 for setInd = 1:length(consts.matchImgId)
 idSet = consts.matchImgId{setInd};    % set of image IDs for cuurent match group (from consts.matchImgId cell array)
 imgNum = length(idSet);               % number of images in chosen set
 
-if imgNum < 2 || imgNum > 2; continue; end; % skipping single images & triplets
+% CONSIDERRING ONLY PAIRS OF IMAGES (BY NOW)
+if imgNum < 2 || imgNum > 2; continue; end; 
 fprintf('Processing image pairs: %d, %d ...\n', idSet(1), idSet(2)); 
 
 imRgb = cell(imgNum,1); % RGB images
@@ -30,7 +34,7 @@ edgesIm = cell(imgNum, 1);
 
 for i = 1:imgNum 
     load(sprintf(consts.imageRgbFilename,  idSet(i)), 'imgRgb');
-    load(sprintf(consts.boundaryInfoPostMerge, sampleSize, params.seg.featureSet, sampleStage, idSet(i)), 'boundaryInfo');
+    load(sprintf(consts.boundaryInfoPostMerge, conf.sampleSize, params.seg.featureSet, conf.sampleStage, idSet(i)), 'boundaryInfo');
     edgesIm{i} = boundaryInfo.edges.fragments;     % edges from watershed segmentation
     juncsIm{i} = boundaryInfo.junctions.position;  % round means top-right pixel from junction point
     imgRgb = double(imgRgb)/255; % im2double
@@ -41,15 +45,18 @@ for i = 1:imgNum
     im{i} = rgb2gray(imRgb{i});
     x{i} = round(juncsIm{i}(:,1));
     y{i} = round(juncsIm{i}(:,2));
+    conf.sizeX = size(imRgb{i},1);
+    conf.sizeY = size(imRgb{i},2);
 end
 clear imgRgb boundaryInfo;
+conf.imgGapStub = 0*ones(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity (255)
 
 % show images
-h_img = figure('Visible',params.debug_visible); clf;
-for i=1:imgNum
-    subplot(1,imgNum,i);
-    imagesc(imRgb{i}); axis image; axis off; title(['Image ', num2str(idSet(i))]);    
-end
+h_img = figure('Visible',params.debug_visible);
+
+imagesc([imRgb{1} conf.imgGapStub imRgb{2}]);
+axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2)));    
+
 if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_a.png', consts.matchDir, idSet(1)) ); end;
 
 % show detected points
@@ -63,7 +70,9 @@ for i = 1:imgNum
         plot(edges{k}(:,1), edges{k}(:,2), 'r', 'LineWidth', 0.5);
    end
 end
-if params.debug; print(h_pnts, '-dpng', sprintf('%s\\img%06d_b.png', consts.matchDir, idSet(1)) ); end;
+if params.debug;      print(h_pnts, '-dpng', sprintf('%s\\img%06d_b.png', consts.matchDir, idSet(1)) ); end;
+if params.debug;     saveas(h_pnts, sprintf('%s\\img%06d_b_png.png', consts.matchDir, idSet(1)), 'png'); end
+if params.debug_fig; saveas(h_pnts, sprintf('%s\\img%06d_b.fig', consts.matchDir, idSet(1)), 'fig'); end
 
 
 
@@ -208,7 +217,7 @@ plot(xct(inliers),yct(inliers),'+g');
 title('Inliers');
 
 figure(5); clf;
-bbox=[-400 1200 -200 700]   % image space for mosaic
+bbox=[-400 1200 -200 700];   % image space for mosaic
 % warp image b to mosaic image using an identity homogrpahy
 % Image b is chosen as the reference frame
 iwb = vgg_warp_H(imbrgb, eye(3), 'linear', bbox);

@@ -29,7 +29,7 @@ consts.supportLabels = [consts.datasetDir '/support_labels.mat'];
 % The total number of images in the dataset.
 consts.numImages = 1449;
 
-consts.useNdx = 1:100; %consts.numImages; % 909:1200
+consts.useNdx = 1:consts.numImages; % 909:1200
 consts.useImages = false(consts.numImages, 1);
 consts.useImages(consts.useNdx) = true; 
 
