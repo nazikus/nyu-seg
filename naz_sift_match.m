@@ -5,12 +5,13 @@ iptsetpref('ImshowBorder','tight'); %??
 Consts; Params;
 params.seg.featureSet = consts.BFT_RGBD;
 params.debug_visible = 'on';   
-params.degub_fig = true;
+params.debug_fig = true;
 
 conf.sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-conf.sampleStage = 3;
+conf.sampleStage = 5;
 conf.imgGap = 20; % size of gap between the images
-
+conf.marker = 'oy';
+conf.markerSize = 3;
 
 % TODO check if classifier and corresponding hierarchical segmentation exists for given sample size
 
@@ -50,29 +51,35 @@ for i = 1:imgNum
 end
 clear imgRgb boundaryInfo;
 conf.imgGapStub = 0*ones(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity (255)
+pairedImRgb = [imRgb{1} conf.imgGapStub imRgb{2}];
 
 % show images
-h_img = figure('Visible',params.debug_visible);
-
-imagesc([imRgb{1} conf.imgGapStub imRgb{2}]);
-axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2)));    
-
+% --------------------------------------------------
+h_img = figure('Visible','off');%params.debug_visible);
+imagesc(pairedImRgb); axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2)));    
 if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_a.png', consts.matchDir, idSet(1)) ); end;
 
+
 % show detected points
-h_pnts = figure('Visible',params.debug_visible); clf;
+% --------------------------------------------------
+h_pnts = figure('Visible',params.debug_visible);
+imagesc(pairedImRgb); axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2))); hold on;
+plot(juncsIm{1}(:,1),juncsIm{1}(:,2), conf.marker, 'MarkerSize', conf.markerSize);
+plot(juncsIm{2}(:,1)+conf.sizeY+conf.imgGap, juncsIm{2}(:,2), conf.marker, 'MarkerSize', conf.markerSize);
 for i = 1:imgNum
-   subplot(1,imgNum,i);
-   imagesc(imRgb{i}); axis image; title(['Image ', num2str(idSet(i))]); hold on;
-   plot(juncsIm{i}(:,1),juncsIm{i}(:,2), '+y', 'MarkerSize',2);
+   if i==1
+       shift = 0;
+   else
+       shift = conf.sizeY + conf.imgGap;
+   end
    edges = edgesIm{i};
    for k = 1:length(edges)
-        plot(edges{k}(:,1), edges{k}(:,2), 'r', 'LineWidth', 0.5);
+        plot(edges{k}(:,1)+shift, edges{k}(:,2), 'r', 'LineWidth', 0.5);
    end
 end
-if params.debug;      print(h_pnts, '-dpng', sprintf('%s\\img%06d_b.png', consts.matchDir, idSet(1)) ); end;
-if params.debug;     saveas(h_pnts, sprintf('%s\\img%06d_b_png.png', consts.matchDir, idSet(1)), 'png'); end
-if params.debug_fig; saveas(h_pnts, sprintf('%s\\img%06d_b.fig', consts.matchDir, idSet(1)), 'fig'); end
+%if params.debug;      print(h_pnts, '-dpng', sprintf('%s/img%06d_b.png', consts.matchDir, idSet(1)) ); end;
+if params.debug;     saveas(h_pnts, sprintf('%s/img%06d_b.png', consts.matchDir, idSet(1)), 'png'); end
+if params.debug_fig; saveas(h_pnts, sprintf('%s/img%06d_b.fig', consts.matchDir, idSet(1)), 'fig'); end
 
 
 
@@ -88,7 +95,7 @@ end
 % Compute tentative matches between image 1 (a) and 2 (b) 
 % by matching local features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-rt        = 0.4;                 % 1NN/2NN distance ratio threshold (between 0 and 1)
+rt        = 0.4;                % 1NN/2NN distance ratio threshold (between 0 and 1)
 D2        = dist2(D{1}',D{2}'); % compute pair-wise distances between descriptors
 [Y,I]     = sort(D2,2);         % sort distances
 rr        = Y(:,1)./Y(:,2);     % compute D. Lowes' 1nn/2nn ratio test
@@ -100,9 +107,8 @@ xbt       = x{2}(I);
 ybt       = y{2}(I);
 
 % show all tentative matches
-h_match = figure('Visible',params.debug_visible); clf;
-subplot(121);
-imshow(imRgb{1}); hold on;
+h_match = figure('Visible',params.debug_visible);
+imshow(pairedImRgb); hold on;
 plot(xat,yat,'+g');
 hl = line([xat; xbt],[yat; ybt],'color','y');
 title( sprintf('Tentative correspondences: img %d (rt=%1.1f)', idSet(1), rt) );
