@@ -4,25 +4,47 @@ iptsetpref('ImshowBorder','tight'); %??
 
 Consts; Params;
 params.seg.featureSet = consts.BFT_RGBD;
-params.debug_visible = 'on';   
+params.debug_visible = 'off';   
 params.debug_fig = true;
 
 conf.sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-conf.sampleStage = 5;
+conf.sampleStage = [5 4 3 2 1];
 conf.imgGap = 20; % size of gap between the images
-conf.marker = 'oy';
+conf.juncMarker = 'oy';
+conf.siftMarker = 'oy';
 conf.markerSize = 3;
+conf.t = {
+           [0.4 0.3], ...
+           [0.6 0.3], ...
+           [0.6 0.4], ...
+           [0.4 0.2] ...
+%           [0.7 0.5] ...
+         };
+     
 
-% TODO check if classifier and corresponding hierarchical segmentation exists for given sample size
+for t_ = conf.t
+rt = t_{1}(1);
+t  = t_{1}(2);
+ 
 
+for sampleStage = conf.sampleStage
 
+% create subdir according to Sample size and Stage chosen
+matchDir = sprintf('%ssample_%d/stage_%d/', consts.matchDir, conf.sampleSize, sampleStage);
+if exist(matchDir, 'dir')~=7
+     mkdir(matchDir);
+end
+
+% TODO verify if classifier and corresponding hierarchical segmentation exists for given sample size
 for setInd = 1:length(consts.matchImgId)
 idSet = consts.matchImgId{setInd};    % set of image IDs for cuurent match group (from consts.matchImgId cell array)
 imgNum = length(idSet);               % number of images in chosen set
 
+
 % CONSIDERRING ONLY PAIRS OF IMAGES (BY NOW)
 if imgNum < 2 || imgNum > 2; continue; end; 
-fprintf('Processing image pairs: %d, %d ...\n', idSet(1), idSet(2)); 
+fprintf('Processing image pairs: %d<->%d, stage %d, rt = %1.1f, t = %1.1f ...', ...
+                            idSet(1), idSet(2), sampleStage, rt, t); 
 
 imRgb = cell(imgNum,1); % RGB images
 im = cell(imgNum, 1);   % greyscale images 
@@ -35,7 +57,7 @@ edgesIm = cell(imgNum, 1);
 
 for i = 1:imgNum 
     load(sprintf(consts.imageRgbFilename,  idSet(i)), 'imgRgb');
-    load(sprintf(consts.boundaryInfoPostMerge, conf.sampleSize, params.seg.featureSet, conf.sampleStage, idSet(i)), 'boundaryInfo');
+    load(sprintf(consts.boundaryInfoPostMerge, conf.sampleSize, params.seg.featureSet, sampleStage, idSet(i)), 'boundaryInfo');
     edgesIm{i} = boundaryInfo.edges.fragments;     % edges from watershed segmentation
     juncsIm{i} = boundaryInfo.junctions.position;  % round means top-right pixel from junction point
     imgRgb = double(imgRgb)/255; % im2double
@@ -56,16 +78,17 @@ pairedImRgb = [imRgb{1} conf.imgGapStub imRgb{2}];
 % show images
 % --------------------------------------------------
 h_img = figure('Visible','off');%params.debug_visible);
-imagesc(pairedImRgb); axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2)));    
-if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_a.png', consts.matchDir, idSet(1)) ); end;
+imshow(pairedImRgb); axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2)));    
+if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_stg%d_a.png', matchDir, idSet(1), sampleStage) ); end;
 
 
 % show detected points
 % --------------------------------------------------
 h_pnts = figure('Visible',params.debug_visible);
-imagesc(pairedImRgb); axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2))); hold on;
-plot(juncsIm{1}(:,1),juncsIm{1}(:,2), conf.marker, 'MarkerSize', conf.markerSize);
-plot(juncsIm{2}(:,1)+conf.sizeY+conf.imgGap, juncsIm{2}(:,2), conf.marker, 'MarkerSize', conf.markerSize);
+imshow(pairedImRgb); axis image; axis off; hold on; 
+title(sprintf('Images #%d #%d, stage%d', idSet(1), idSet(2), sampleStage)); 
+plot(juncsIm{1}(:,1),juncsIm{1}(:,2), conf.juncMarker, 'MarkerSize', conf.markerSize);
+plot(juncsIm{2}(:,1)+conf.sizeY+conf.imgGap, juncsIm{2}(:,2), conf.juncMarker, 'MarkerSize', conf.markerSize);
 for i = 1:imgNum
    if i==1
        shift = 0;
@@ -77,9 +100,9 @@ for i = 1:imgNum
         plot(edges{k}(:,1)+shift, edges{k}(:,2), 'r', 'LineWidth', 0.5);
    end
 end
-%if params.debug;      print(h_pnts, '-dpng', sprintf('%s/img%06d_b.png', consts.matchDir, idSet(1)) ); end;
-if params.debug;     saveas(h_pnts, sprintf('%s/img%06d_b.png', consts.matchDir, idSet(1)), 'png'); end
-if params.debug_fig; saveas(h_pnts, sprintf('%s/img%06d_b.fig', consts.matchDir, idSet(1)), 'fig'); end
+%if params.debug;      print(h_pnts, '-dpng', sprintf('%s/img%06d_b.png', matchDir, idSet(1)) ); end;
+if params.debug;     saveas(h_pnts, sprintf('%s/img%06d_stg%d_b.png', matchDir, idSet(1), sampleStage), 'png'); end
+if params.debug_fig; saveas(h_pnts, sprintf('%s/img%06d_stg%d_b.fig', matchDir, idSet(1), sampleStage), 'fig'); end
 
 
 
@@ -95,7 +118,7 @@ end
 % Compute tentative matches between image 1 (a) and 2 (b) 
 % by matching local features
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-rt        = 0.4;                % 1NN/2NN distance ratio threshold (between 0 and 1)
+%rt        = 0.6;                % 1NN/2NN distance ratio threshold (between 0 and 1)
 D2        = dist2(D{1}',D{2}'); % compute pair-wise distances between descriptors
 [Y,I]     = sort(D2,2);         % sort distances
 rr        = Y(:,1)./Y(:,2);     % compute D. Lowes' 1nn/2nn ratio test
@@ -108,42 +131,57 @@ ybt       = y{2}(I);
 
 % show all tentative matches
 h_match = figure('Visible',params.debug_visible);
-imshow(pairedImRgb); hold on;
-plot(xat,yat,'+g');
-hl = line([xat; xbt],[yat; ybt],'color','y');
-title( sprintf('Tentative correspondences: img %d (rt=%1.1f)', idSet(1), rt) );
-axis off;
+imshow(pairedImRgb); axis image; axis off; hold on;
+title( sprintf('Tentative correspondences: img #%d #%d, stage%d (rt=%1.1f)', idSet(1), idSet(2), sampleStage, rt) );
+for i = 1:imgNum
+   if i==1
+       shift = 0;
+   else
+       shift = conf.sizeY + conf.imgGap;
+   end
+   edges = edgesIm{i};
+   for k = 1:length(edges)
+        plot(edges{k}(:,1)+shift, edges{k}(:,2), 'r', 'LineWidth', 0.5);
+   end
+end
+plot(xat,yat,conf.siftMarker, 'MarkerSize', conf.markerSize);
+plot(xbt+conf.sizeY+conf.imgGap,ybt,conf.siftMarker, 'MarkerSize', conf.markerSize);
+hl = line([xat; xbt+conf.sizeY+conf.imgGap],[yat; ybt],'color','g');
 
-subplot(122);
-imshow(imRgb{2}); hold on;
-plot(xbt,ybt,'og');
-title( sprintf('img %d', idSet(1)) );
+if params.debug;     saveas(h_match, sprintf('%s/img%06d_stg%d_rt%1.1f.png', matchDir, idSet(1), sampleStage, rt), 'png'); end
+if params.debug_fig; saveas(h_match, sprintf('%s/img%06d_stg%d_rt%1.1f.fig', matchDir, idSet(1), sampleStage, rt), 'fig'); end
 
-if params.debug; print(h_match, '-dpng', sprintf('%s\\img%06d_rt%1.1f.png', consts.matchDir, idSet(1), rt) ); end;
+%if length(D)<5; continue; end;
 
-if length(D)<5; continue; end;
 
+try
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Robustly fit homography
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Specify the inlier threshold (in noramlized image co-ordinates)
-t              = 0.3;
+%t              = 0.3;
 [Hab, inliers] = ransacfithomography([xat; yat], [xbt; ybt], t);
 
 % show inliers
 h_homo = figure('Visible',params.debug_visible); clf; clf;
-subplot(121);
-imshow(imRgb{1}); hold on;
-hl = line([xat(inliers); xbt(inliers)],[yat(inliers); ybt(inliers)]);
-set(hl,'color','y');
-plot(xat(inliers),yat(inliers),'+g');
-title(sprintf('Inliers: img %d (rt=%1.1f, t=%1.1f)', idSet(1), rt, t));
-
-subplot(122); 
-imshow(imRgb{2}); hold on;
-plot(xbt(inliers),ybt(inliers),'og');
-title( sprintf('img %d', idSet(1)) );
-if params.debug; print(h_homo, '-dpng', sprintf('%s\\img%06d_rt%1.1f_t%1.1f.png', consts.matchDir, idSet(1), rt, t) ); end;
+imshow(pairedImRgb); axis image; axis off; hold on;
+title(sprintf('Homography (ransac inliers): img #%d #%d, stg%d (rt=%1.1f, t=%1.1f)', idSet(1), idSet(2), sampleStage, rt, t));
+for i = 1:imgNum
+   if i==1
+       shift = 0;
+   else
+       shift = conf.sizeY + conf.imgGap;
+   end
+   edges = edgesIm{i};
+   for k = 1:length(edges)
+        plot(edges{k}(:,1)+shift, edges{k}(:,2), 'r', 'LineWidth', 0.5);
+   end
+end
+hl = line([xat(inliers); xbt(inliers)+conf.sizeY+conf.imgGap],[yat(inliers); ybt(inliers)],'color','g');
+plot(xat(inliers),yat(inliers),conf.siftMarker, 'MarkerSize', conf.markerSize);
+plot(xbt(inliers)+conf.sizeY+conf.imgGap,ybt(inliers), conf.siftMarker, 'MarkerSize', conf.markerSize);
+if params.debug;     saveas(h_homo, sprintf('%s/img%06d_stg%d_t%1.1f_rt%1.1f.png', matchDir, idSet(1), sampleStage, t, rt), 'png'); end
+if params.debug_fig; saveas(h_homo, sprintf('%s/img%06d_stg%d_t%1.1f_rt%1.1f.fig', matchDir, idSet(1), sampleStage, t, rt), 'fig'); end
 
 
 
@@ -181,7 +219,9 @@ if params.debug; print(h_homo, '-dpng', sprintf('%s\\img%06d_rt%1.1f_t%1.1f.png'
 % 3. Re-estimate homography from inliers
 
 % ---- 
-
+catch ME
+    fprintf('Exception in homography: %s\n', ME.message);
+end
 if imgNum < 3
     %pause;
     close all;
@@ -251,4 +291,6 @@ axis image; axis off;
 close all;
 end
 
+end
 
+end
