@@ -5,7 +5,12 @@ iptsetpref('ImshowBorder','tight'); %??
 Consts; Params;
 params.seg.featureSet = consts.BFT_RGBD;
 params.debug_visible = 'off';   
-params.debug_fig = true;
+params.debug_fig = false;
+
+conf.imgFile = '%s/img%06d_stg%d_a';
+conf.imgJuncFile      = '%s/img%06d_stg%d_b';
+conf.imgSiftMatchFile = '%s/img%06d_stg%d_rt%1.1f';
+conf.imgSiftHomoFile  = '%s/img%06d_stg%d_t%1.1f_rt%1.1f';
 
 conf.sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
 conf.sampleStage = [5 4 3 2 1];
@@ -14,18 +19,21 @@ conf.juncMarker = 'oy';
 conf.siftMarker = 'oy';
 conf.markerSize = 3;
 conf.t = {
-           [0.4 0.3], ...
-           [0.6 0.3], ...
+           [0.7 0.4], ...
            [0.6 0.4], ...
-           [0.4 0.2] ...
-%           [0.7 0.5] ...
+           [0.4 0.4], ...
+           [0.6 0.3], ...
+           [0.4 0.2], ...
+           [0.3 0.2] ...
          };
      
+
+% TODO to skip already computed figs
 
 for t_ = conf.t
 rt = t_{1}(1);
 t  = t_{1}(2);
- 
+
 
 for sampleStage = conf.sampleStage
 
@@ -77,13 +85,20 @@ pairedImRgb = [imRgb{1} conf.imgGapStub imRgb{2}];
 
 % show images
 % --------------------------------------------------
+filename = sprintf([conf.imgFile '.png'], matchDir, idSet(1), sampleStage);
+if ~exist(filename, 'file')
+
 h_img = figure('Visible','off');%params.debug_visible);
 imshow(pairedImRgb); axis image; axis off; title(sprintf('Images #%d #%d', idSet(1), idSet(2)));    
-if params.debug; print(h_img, '-dpng', sprintf('%s\\img%06d_stg%d_a.png', matchDir, idSet(1), sampleStage) ); end;
+if params.debug; print(h_img, '-dpng', sprintf(filename, matchDir, idSet(1), sampleStage) ); end;
 
+end
 
 % show detected points
 % --------------------------------------------------
+filename = sprintf([conf.imgJuncFile '.png'], matchDir, idSet(1), sampleStage);
+if ~exist(filename, 'file')
+
 h_pnts = figure('Visible',params.debug_visible);
 imshow(pairedImRgb); axis image; axis off; hold on; 
 title(sprintf('Images #%d #%d, stage%d', idSet(1), idSet(2), sampleStage)); 
@@ -101,14 +116,17 @@ for i = 1:imgNum
    end
 end
 %if params.debug;      print(h_pnts, '-dpng', sprintf('%s/img%06d_b.png', matchDir, idSet(1)) ); end;
-if params.debug;     saveas(h_pnts, sprintf('%s/img%06d_stg%d_b.png', matchDir, idSet(1), sampleStage), 'png'); end
-if params.debug_fig; saveas(h_pnts, sprintf('%s/img%06d_stg%d_b.fig', matchDir, idSet(1), sampleStage), 'fig'); end
+if params.debug;     saveas(h_pnts, filename, 'png'); end
+if params.debug_fig; saveas(h_pnts, filename, 'fig'); end
 
-
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Extract descriptors (heavily blurred 21xb1 patches)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+filename = sprintf([conf.imgSiftHomoFile '.png'], matchDir, idSet(1), sampleStage, t, rt);
+if ~exist(filename, 'file')
 
 for i = 1:imgNum
    [D{i}, x{i}, y{i}] = ext_desc(im{i}, x{i}, y{i}); 
@@ -148,8 +166,8 @@ plot(xat,yat,conf.siftMarker, 'MarkerSize', conf.markerSize);
 plot(xbt+conf.sizeY+conf.imgGap,ybt,conf.siftMarker, 'MarkerSize', conf.markerSize);
 hl = line([xat; xbt+conf.sizeY+conf.imgGap],[yat; ybt],'color','g');
 
-if params.debug;     saveas(h_match, sprintf('%s/img%06d_stg%d_rt%1.1f.png', matchDir, idSet(1), sampleStage, rt), 'png'); end
-if params.debug_fig; saveas(h_match, sprintf('%s/img%06d_stg%d_rt%1.1f.fig', matchDir, idSet(1), sampleStage, rt), 'fig'); end
+if params.debug;     saveas(h_match, sprintf([conf.imgSiftMatchFile '.png'], matchDir, idSet(1), sampleStage, rt), 'png'); end
+if params.debug_fig; saveas(h_match, sprintf([conf.imgSiftMatchFile '.fig'], matchDir, idSet(1), sampleStage, rt), 'fig'); end
 
 %if length(D)<5; continue; end;
 
@@ -180,8 +198,8 @@ end
 hl = line([xat(inliers); xbt(inliers)+conf.sizeY+conf.imgGap],[yat(inliers); ybt(inliers)],'color','g');
 plot(xat(inliers),yat(inliers),conf.siftMarker, 'MarkerSize', conf.markerSize);
 plot(xbt(inliers)+conf.sizeY+conf.imgGap,ybt(inliers), conf.siftMarker, 'MarkerSize', conf.markerSize);
-if params.debug;     saveas(h_homo, sprintf('%s/img%06d_stg%d_t%1.1f_rt%1.1f.png', matchDir, idSet(1), sampleStage, t, rt), 'png'); end
-if params.debug_fig; saveas(h_homo, sprintf('%s/img%06d_stg%d_t%1.1f_rt%1.1f.fig', matchDir, idSet(1), sampleStage, t, rt), 'fig'); end
+if params.debug;     saveas(h_homo, filename, 'png'); end
+if params.debug_fig; saveas(h_homo, filename, 'fig'); end
 
 
 
@@ -222,6 +240,11 @@ if params.debug_fig; saveas(h_homo, sprintf('%s/img%06d_stg%d_t%1.1f_rt%1.1f.fig
 catch ME
     fprintf('Exception in homography: %s\n', ME.message);
 end
+
+else
+    fprintf(' pair computed already.\n');
+end
+
 if imgNum < 3
     %pause;
     close all;
