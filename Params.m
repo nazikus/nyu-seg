@@ -8,7 +8,7 @@ params = struct();
 % produce many figures and additional output.
 params.debug = true;
 params.degub_fig = false;     % write figures to files
-params.debug_visible = 'on'; % figure property 'visible'
+params.debug_visible = 'off'; % figure property 'visible'
 
 % Whether or not to overwrite existing files.
 params.overwrite_normals   = false;

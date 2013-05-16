@@ -69,7 +69,8 @@ function [imgLabels, planes] = cut_planes_registered(imgRgb, planeNdxs, ...
   DEBUG_ = params.debug;  %DEBUG b_ initial label map
   if DEBUG_
     h_ = figure('Visible','off');
-    imagesc(imgLabels);
+    %imagesc(imgLabels);
+    imshow(imgLabels,[],'ColorMap',colormap('Jet'));
     axis image;
     colormap jet;
     title('Initial Label Map [hit any key to continue]');
@@ -167,12 +168,13 @@ function [imgLabels, planes] = cut_planes_registered(imgRgb, planeNdxs, ...
   %DEBUG d_ final image map
   if DEBUG_ == true
     h_ = figure('Visible','off');
-    imagesc(imgLabels);
+    %imagesc(imgLabels);
+    imshow(imgLabels,[],'ColorMap',colormap('Jet'));
     title('Final image map');
     if params.degub_fig
-      saveas(h_, sprintf('%s%06d_d_final_image_map.fig',consts.planeDataDir,ii_), 'fig');
+      saveas(h_, sprintf('%s%06d_c_final_image_map.fig',consts.planeDataDir,ii_), 'fig');
     end
-    print(h_, '-dpng', sprintf('%s%06d_d_final_image_map.png',consts.planeDataDir,ii_));
+    print(h_, '-dpng', sprintf('%s%06d_c_final_image_map.png',consts.planeDataDir,ii_));
     close(h_)
   end
 end

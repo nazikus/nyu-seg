@@ -174,7 +174,9 @@ if(DEBUG_)
     hh_ = figure('Visible',params.debug_visible);            
     %subplot 121, 
     hold off
-    imagesc(img), axis image, hold on
+    %imagesc(img), 
+    imshow(img,[],'ColorMap',colormap('Jet')),
+    axis image, hold on
     title('Segment Borders')
     
     %subplot 122, hold off

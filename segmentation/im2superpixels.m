@@ -62,7 +62,8 @@ function [bndinfo, pball] = im2superpixels(im, initseg)
       close(h_);
       
       h_ = figure('Visible','off');
-      imagesc(wseg);
+      %imagesc(wseg);
+      imshow(wseg,[],'ColorMap',colormap('Jet'));
       if params.degub_fig
         saveas(h_, sprintf('%s%06d_c_watershed_consist.fig',consts.watershedDir,ii_), 'fig');
       end

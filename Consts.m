@@ -27,9 +27,13 @@ consts.gurobiPath = '~/code1/gurobi/latest/linux64/matlab/';
 consts.supportLabels = [consts.datasetDir '/support_labels.mat'];
 
 % The total number of images in the dataset.
-consts.numImages = 1449;
+consts.numImages = 100087;
 
-consts.useNdx = 1:consts.numImages; % 909:1200
+consts.useNdx = [100006 100008 100013 100017 100020 100022 100025 ...
+                 100029 100030 100035 ...
+                 100040 100043 100046 100049 100052 ...
+                 100054 100056 100060 100062 100065 ...
+                 100069 100074 100078 100084 100087]; %1:consts.numImages; % 909:1200 % 100006:100087
 consts.useImages = false(consts.numImages, 1);
 consts.useImages(consts.useNdx) = true; 
 
