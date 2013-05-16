@@ -1,0 +1,16 @@
+.mat
+.m
+.asv
+.mexw32
+.mexw64
+.cpp
+.h
+images_depth\
+images_depth_raw\
+images_rgb\
+
+.rar
+.zip
+.bat
+.inc
+sublime
