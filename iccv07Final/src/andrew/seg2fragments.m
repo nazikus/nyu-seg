@@ -176,7 +176,8 @@ if(DEBUG_)
     hold off
     %imagesc(img), 
     imshow(img,[],'ColorMap',colormap('Jet')),
-    axis image, hold on
+    % axis image,
+    hold on
     title('Segment Borders')
     
     %subplot 122, hold off
