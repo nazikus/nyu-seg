@@ -1,3 +1,7 @@
 *.mex*
 *.sublime*
 *.asv
+
+ASIFT/*.txt
+ASIFT/matchings.txt
+ASIFT/*.png

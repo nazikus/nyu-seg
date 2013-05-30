@@ -27,9 +27,10 @@ consts.gurobiPath = '~/code1/gurobi/latest/linux64/matlab/';
 consts.supportLabels = [consts.datasetDir '/support_labels.mat'];
 
 % The total number of images in the dataset.
-consts.numImages = 300000;
+consts.numImages = 1449;
+% consts.numImages = 300000;
 
-%consts.useNdx = 1:consts.numImages; % 909:1200 % 100006:100087
+% consts.useNdx = 1:500; % 909:1200 % 100006:100087
 consts.useNdx = [ 200001 200005 200008 200011 200012 200014 200016 200017 200019 200022 200024 200025 200027 200033 200035 200038 200040 200042 200044 200045 200047 200049 200057 200058 200059 200062 200063 200064 ];
 consts.useImages = false(consts.numImages, 1);
 consts.useImages(consts.useNdx) = true; 
@@ -137,7 +138,7 @@ consts.watershedFilename = [consts.watershedDir 'watershed_%06d.mat'];
 %%%%%%%%%%%%%%%%%%%%%%%%%%%
 % appending prefix to each file with indicates sample size used for training
 consts.boundaryDir = 'boundary_features/';
-consts.sampleDir   = sprintf('sample_%d/', length(consts.useNdx));
+consts.sampleDir   = sprintf('sample_%d/', length(consts.useNdx)); %'sample_1449/';
 consts.boundaryFeaturesDir = [consts.datasetDir  consts.boundaryDir consts.sampleDir];
 consts.boundaryFeaturesFilename       = [consts.boundaryFeaturesDir 's%d_type%d_stg%d_%06d.mat'];
 consts.boundaryFeaturesDataset        = [consts.boundaryFeaturesDir 's%d_dataset_type%d_stg%d.mat'];

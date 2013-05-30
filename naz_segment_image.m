@@ -11,9 +11,9 @@ OVERWRITE_E = true;
 OVERWRITE_M = true;
 params.seg.featureSet = consts.BFT_RGBD;
 params.debug_visible = 'off';   % doesn't work because seg2framents.m loads Params.m again
-sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
+sampleSize  = 1449; %length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
 global segtestDir; segtestDir = [consts.datasetDir consts.segmentDir consts.sampleDir];
-segtestNdxs = [471]; % consts.useNdx;
+segtestNdxs = consts.useNdx;
 
 fprintf('Starting segmentation for %d images: %s\n', length(segtestNdxs) ,sprintf('#%d ', segtestNdxs));
 fprintf('Classifier trained on sample size: %d\n', sampleSize);
@@ -39,7 +39,9 @@ for ii = segtestNdxs
         % loading classifiers for current stage
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         fprintf('\nLoading classifiers for stage %d... ', stage);
+        %boundaryClassifierFilename = sprintf(consts.boundaryClassifierFilename, sampleSize, params.seg.featureSet, stage);
         boundaryClassifierFilename = sprintf(consts.boundaryClassifierFilename, sampleSize, params.seg.featureSet, stage);
+        
 
         assert(exist(boundaryClassifierFilename, 'file')==2, '**Assert error** file does not exist: %s\n', boundaryClassifierFilename);
         load(boundaryClassifierFilename, 'classifier'); 
@@ -66,19 +68,19 @@ for ii = segtestNdxs
             if stage == 1
               prevBoundaryDataFilenameSeg = sprintf(consts.watershedFilename, ii);
             else
-              prevBoundaryDataFilenameSeg = sprintf(consts.boundaryInfoPostMerge, length(consts.useNdx), params.seg.featureSet, stage-1, ii);
+              prevBoundaryDataFilenameSeg = sprintf(consts.boundaryInfoPostMerge, sampleSize, params.seg.featureSet, stage-1, ii);
               prevBoundaryDataFilenameSeg = strrep(prevBoundaryDataFilenameSeg, consts.boundaryDir, consts.segmentDir);
             end
             load(prevBoundaryDataFilenameSeg, 'boundaryInfo');
             load(sprintf(consts.imageRgbFilename, ii), 'imgRgb');
             load(sprintf(consts.planeDataFilename, ii), 'planeData'); 
             load(sprintf(consts.watershedFilename, ii), 'pbAll');
-            load(sprintf(consts.objectLabelsFilename, ii), 'imgObjectLabels');
-            load(sprintf(consts.instanceLabelsFilename, ii), 'imgInstanceLabels');
+%            load(sprintf(consts.objectLabelsFilename, ii), 'imgObjectLabels');
+%            load(sprintf(consts.instanceLabelsFilename, ii), 'imgInstanceLabels');
 
             %get list of each instance label for each region
-            [~, instanceLabels] = get_labels_from_instances(boundaryInfo.imgRegions, imgObjectLabels, imgInstanceLabels);    
-            [boundaryFeatures, boundaryLabels] = get_boundary_classifier_features(ii, imgRgb, planeData, boundaryInfo, pbAll, instanceLabels, params);
+ %           [~, instanceLabels] = get_labels_from_instances(boundaryInfo.imgRegions, imgObjectLabels, imgInstanceLabels);    
+            [boundaryFeatures, boundaryLabels] = get_boundary_classifier_features(ii, imgRgb, planeData, boundaryInfo, pbAll, 0, params);
             save(boundaryFeaturesFilenameSeg, 'boundaryFeatures', 'boundaryLabels');
             fprintf('done.\n');
             clear boundaryInfo imgRgb planeData pbAll imgObjectLabels imgInstanceLabels;
@@ -98,7 +100,7 @@ for ii = segtestNdxs
             if stage == 1
               boundaryInfoFilenameSeg = sprintf(consts.watershedFilename, ii);
               source      = sprintf('%s%06d_d_fragments.png',consts.watershedDir,ii);
-              destination = sprintf('%ss%d_%06d_fragments_stage0.png', segtestDir, length(consts.useNdx), ii);
+              destination = sprintf('%ss%d_%06d_fragments_stage0.png', segtestDir, sampleSize, ii);
               copyfile(source, destination); clear source destination;
             else
               boundaryInfoFilenameSeg = sprintf(consts.boundaryInfoPostMerge, sampleSize, params.seg.featureSet, stage-1, ii);
@@ -108,8 +110,8 @@ for ii = segtestNdxs
             load(sprintf(consts.imageRgbFilename, ii), 'imgRgb');
             load(sprintf(consts.planeDataFilename, ii), 'planeData');
             load(sprintf(consts.watershedFilename, ii), 'pbAll');
-            load(sprintf(consts.objectLabelsFilename, ii), 'imgObjectLabels');
-            load(sprintf(consts.instanceLabelsFilename, ii), 'imgInstanceLabels');
+            % load(sprintf(consts.objectLabelsFilename, ii), 'imgObjectLabels');
+            % load(sprintf(consts.instanceLabelsFilename, ii), 'imgInstanceLabels');
             load(boundaryFeaturesFilenameSeg, 'boundaryFeatures');
 
             %[~, instanceLabels] = get_labels_from_instances(boundaryInfo.imgRegions, imgObjectLabels, imgInstanceLabels);

@@ -10,8 +10,12 @@ function [boundaryFeatures, boundaryLabels] = ...
 
   s1 = boundaryInfo.edges.spLR(:, 1);
   s2 = boundaryInfo.edges.spLR(:, 2);
-  boundaryLabels = (instanceLabels(s1) ~= instanceLabels(s2)) * 2 - 1;
-  boundaryLabels(instanceLabels(s1) == 0 & instanceLabels(s2) == 0) = 0;
+ 
+  boundaryLabels = 0;
+  if instanceLabels ~= 0
+    boundaryLabels = (instanceLabels(s1) ~= instanceLabels(s2)) * 2 - 1;
+    boundaryLabels(instanceLabels(s1) == 0 & instanceLabels(s2) == 0) = 0;
+  end
   
   points3d = swap_YZ(planeData.points3d);
   normals = swap_YZ(planeData.normals);
@@ -45,9 +49,11 @@ function [boundaryFeatures, boundaryLabels] = ...
   end
   
   % remove data with void boundaryLabels
-  valid = boundaryLabels ~= 0;
-  boundaryLabels = boundaryLabels(valid);
-  boundaryFeatures = boundaryFeatures(valid, :);
+  if boundaryLabels ~=0
+      valid = boundaryLabels ~= 0;
+      boundaryLabels = boundaryLabels(valid);
+      boundaryFeatures = boundaryFeatures(valid, :);
+  end
 end
 
 % Returns features extracted from the 2D (RGB) image only.

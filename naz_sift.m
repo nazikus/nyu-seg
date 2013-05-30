@@ -4,7 +4,7 @@ iptsetpref('ImshowBorder','tight'); %??
 
 Consts; Params;
 params.seg.featureSet = consts.BFT_RGBD;
-params.debug_visible = 'off';   
+params.debug_visible = 'on';   
 params.debug_fig = false;
 
 conf.imgFile = '%s/img%06d_stg%d_a';
@@ -12,17 +12,23 @@ conf.imgJuncFile      = '%s/img%06d_stg%d_b';
 conf.imgSiftMatchFile = '%s/img%06d_stg%d_rt%1.1f';
 conf.imgSiftHomoFile  = '%s/img%06d_stg%d_t%1.1f_rt%1.1f';
 
-conf.sampleSize  = length(consts.useNdx); %%% NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
+%NB! Constants must be modified inside Consts.m only, don't modify them
+%here, otherwise annoying bugs will come out and bug you.
+
+%%% NB! Do not change this line, change sample size only by changing the
+%%% range of consts.useNdx in Consts.m
+conf.sampleSize  = length(consts.useNdx); 
+
 conf.sampleStage = [5 4 3 2 1];
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oy';
 conf.markerSize = 3;
 conf.t = {
-           [0.7 0.4], ...
+           [0.6 0.3], ...
            [0.6 0.4], ...
            [0.4 0.4], ...
-           [0.6 0.3], ...
+           [0.7 0.4], ...
            [0.4 0.2], ...
            [0.3 0.2] ...
          };
