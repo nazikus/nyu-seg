@@ -138,7 +138,7 @@ if params.debug_fig; saveas(h_pnts, filename, 'fig'); end
 
 end
 
-
+naz_test;
 % applying a-sift to 2 images
 % ------------- ------------------------------------
 a.imIn{1} = ['imIn1.png'];
