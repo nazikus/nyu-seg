@@ -21,15 +21,15 @@ params.debug_fig = false;
 conf.overwrite_image = true;
 conf.overwrite_asift = false;
 conf.imgFile = '%s/img%06d_stg%d_a';
-conf.imgJuncFile       = '%s/img%06d_stg%d_j';       % edges and junctions
-conf.imgSiftMatchPoint = '%s/img%06d_stg%d_l';       % asift match points
-conf.imgSiftMatchLineH = '%s/img%06d_stg%d_m';       % asift match lines
+conf.imgJuncFile       = '%s/img%06d_stg%d_j';         % edges and junctions
+conf.imgSiftMatchPoint = '%s/img%06d_stg%d_l';         % asift match points
+conf.imgSiftMatchLineH = '%s/img%06d_stg%d_m';         % asift match lines
 %TODO vertical match
-conf.imgSiftMatchHori  = '%s/img%06d_stg%d_mh';      % asift greyscal match lines horizontal alignment
-conf.imgSiftMatchVert  = '%s/img%06d_stg%d_mv';      % asift greyscal match lines vertical alignment
+conf.imgSiftMatchHori  = '%s/img%06d_stg%d_mh';        % asift greyscal match lines horizontal alignment
+conf.imgSiftMatchVert  = '%s/img%06d_stg%d_mv';        % asift greyscal match lines vertical alignment
 conf.imgSiftHomoFile   = '%s/img%06d_stg%d_xh_t%1.1f'; % homography fir match lines
-conf.asiftMatchFile    = '%sasift_img%06d_stg%d';    % asift match point coordinates (text file)
-conf.regionMatchFile   = '%s/region_img%06d.mat';     % .mat containing structure with region matching
+conf.asiftMatchRaw     = '%sasift_img%06d_stg%d';      % asift match point coordinates (text file)
+conf.asiftRegionFile   = '%s/asift_match_%06d.mat';    % .mat containing structure with region and corresponding asifts points
 
 
 % NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
@@ -140,7 +140,7 @@ a.keys{1} = 'keys1.txt';
 a.keys{2} = 'keys2.txt';
 a.flag_resize = 0;
 
-aiftfilepath = sprintf([conf.asiftMatchFile '.txt'], matchDir, idSet(1), sampleStage);
+aiftfilepath = sprintf([conf.asiftMatchRaw '.txt'], matchDir, idSet(1), sampleStage);
 if ~exist(aiftfilepath, 'file') || conf.overwrite_asift
     asiftdir = [consts.datasetDir 'indoor_scene_seg_sup/ASIFT/'];
     cd(asiftdir);
@@ -286,7 +286,7 @@ for r = unique(regions)';
 %     delete(hc);
 end
 end
-save(sprintf(conf.regionMatchFile, matchDir, idSet(1)), 'regionMatch'); 
+save(sprintf(conf.asiftRegionFile, matchDir, idSet(1)), 'regionMatch'); 
 
 
 % pause;
