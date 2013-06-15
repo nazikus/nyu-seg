@@ -1,7 +1,8 @@
 clear; clc; close all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
-% warning off all
+warning off all
 profile clear
-profile -memory on
+profile off
+%profile -memory on
 
 iptsetpref('ImshowBorder','tight'); %??
 
@@ -23,7 +24,7 @@ conf.regionLLL         = '%s/img%06d_%02d_xl';       % actual region matching
 conf.regionMMM         = '%s/img%06d_%02d_xm';       % actual region matching
 
 % NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-conf.startFromImgID = 0; %171;
+conf.startFromImgID = 173; %171;
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
@@ -158,8 +159,9 @@ for matfile = matlist
         
         % FINISHING ITERATION
         % getting back the original figure with paired images
-        delete(h_fig);
-        h_fig = imshow(pairedImRgb); axis image; axis off; hold on;
+        % delete(h_fig);
+        % h_fig = imshow(pairedImRgb); axis image; axis off; hold on;
+        image(pairedImRgb);
         title(sprintf('Region matching (based on asift): img pair (%d, %d)', rm.id(I1), rm.id(I2)));
         naz_plot_paired_edges(edgesIm, conf);
         
@@ -200,16 +202,17 @@ for matfile = matlist
         % text = total number of fragments detected
         text(20+shift, 20, num2str(sum(cellfun(@(x) length(x), matchedFrags(:,1)))),  'Color', [0.9 0.9 0.9], 'FontSize', 16, 'FontWeight', 'Bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle');
         saveas(h_fig, sprintf([conf.fragPenalizeTotal '.png'], [matchDir 'penalized'], rm.id(I1)), 'png');
-        delete(h_fig);
+%        delete(h_fig);
 
-        h_fig = imshow(pairedImRgb); axis image; axis off; hold on;
+%        h_fig = imshow(pairedImRgb); axis image; axis off; hold on;
+        image(pairedImRgb);
         title(sprintf('Region matching (based on asift): img pair (%d, %d)', rm.id(I1), rm.id(I2)));
         naz_plot_paired_edges(edgesIm, conf);
         
         % apend found fragment matches to initial mat file
     end
     fprintf('\n ------------------------------------------\n');
-    profile viewer;
+    %profile viewer;
     
     end
 end
