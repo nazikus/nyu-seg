@@ -11,7 +11,7 @@ consts.matchedDir   = [consts.datasetDir 'asift_matched/'];
 
 params.seg.featureSet = consts.BFT_RGBD;
 params.debug = true;
-params.debug_visible = 'off';   
+params.debug_visible = 'on';   
 params.debug_fig = false;
 
 % Must replace below 'consts' field when using A-SIFT
@@ -24,7 +24,7 @@ conf.regionLLL         = '%s/img%06d_%02d_xl';       % actual region matching
 conf.regionMMM         = '%s/img%06d_%02d_xm';       % actual region matching
 
 % NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-conf.startFromImgID = 173; %171;
+conf.startFromImgID = 125; %171; %462;
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
@@ -90,8 +90,8 @@ for matfile = matlist
     for rR = 1:size(rm.region2ind{I2},1)
         inR = rm.region2ind{I2}(rR,:);     
         if ~(any(inR)); continue; end;   % skip if region does not contain asift point
-        haL_all = plot(xa{I1},ya{I1},'ob', 'MarkerSize', conf.markerSize/2);
-        haR_all = plot(xa{I2}+conf.sizeY+conf.imgGap,ya{I2}, 'ob', 'MarkerSize', conf.markerSize/2);
+        haL_all = plot(xa{I1},ya{I1},'ob', 'MarkerSize', conf.markerSize);
+        haR_all = plot(xa{I2}+conf.sizeY+conf.imgGap,ya{I2}, 'ob', 'MarkerSize', conf.markerSize);
         
         regionsR = rm.bndrInfo{I2}.imgRegions;
         contR = naz_region_contour(regionsR==rR);
@@ -118,6 +118,8 @@ for matfile = matlist
         iter = iter-1;
         if iter>1
             [matchedFrags{it,1} matchedFrags{it,2}] = naz_get_fragments(matchedRegions{it}, rm.bndrInfo{I1}); %#ok<SAGROW>
+        elseif iter == 0
+            continue;
         else
             matchedRegions = matchedRegions(1:end-1);
             delete(hc_L{1}, ha_L{1}, hl{1}, ha_R, hc_R, haL_all, haR_all); clear hc_L ha_L hl ha_R hc_R haL_all haR_all;

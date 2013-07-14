@@ -1,4 +1,4 @@
-clear; clc; close all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
+clear; sclose all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
 warning off all;
 
 iptsetpref('ImshowBorder','tight'); %??
@@ -19,7 +19,7 @@ params.debug_fig = false;
 
 % Must replace below 'consts' field when using A-SIFT
 conf.overwrite_image = true;
-conf.overwrite_asift = false;
+conf.overwrite_asift = true;
 conf.imgFile = '%s/img%06d_stg%d_a';
 conf.imgJuncFile       = '%s/img%06d_stg%d_j';         % edges and junctions
 conf.imgSiftMatchPoint = '%s/img%06d_stg%d_l';         % asift match points
@@ -34,12 +34,12 @@ conf.asiftRegionFile   = '%s/asift_match_%06d.mat';    % .mat containing structu
 
 % NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
 conf.sampleSize  = length(consts.useNdx); 
-conf.sampleStages = [5];
-conf.imgGap = 20; % size of gap between the images
+conf.sampleStages = [5]; % use [5 4 3 2 1] to loop over all stages segmentations
+conf.imgGap = 20; % size of gap between the images in pixels
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
 conf.markerSize = 3;
-conf.startFromImgID = 0;
+conf.startFromImgID = 384;
      
 for sampleStage = conf.sampleStages
 for setInd = 1:length(consts.matchImgId)
@@ -47,8 +47,9 @@ for setInd = 1:length(consts.matchImgId)
 idSet = consts.matchImgId{setInd};    % set of image IDs for cuurent match group (from consts.matchImgId cell array)
 imgNum = length(idSet);               % number of images in chosen set
 
-% create subdir according to Sample size and Stage chosen
-matchDir = sprintf('%ssample%d_%d/stage_%d/', consts.matchDir, floor(idSet(1)/10^5),conf.sampleSize, sampleStage);
+% create subdir according to Sample size and Stage chosen to keep each experiment separately
+% matchDir = sprintf('%ssample%d_%d/stage_%d/', consts.matchDir, floor(idSet(1)/10^5),conf.sampleSize, sampleStage);
+matchDir = sprintf('%ssample%d_000/stage_%d/', consts.matchDir, floor(idSet(1)/10^5),sampleStage); %TEMP, better use above to keep seperate dirs
 if exist(matchDir, 'dir')~=7
      mkdir(matchDir);
 end
@@ -95,7 +96,7 @@ for i = 1:imgNum
     % naz_test;    
 end
 clear imgRgb boundaryInfo;
-conf.imgGapStub = 0*ones(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity (255)
+conf.imgGapStub = 0*ones(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity
 pairedImRgb = [imRgb{1} conf.imgGapStub imRgb{2}];
 
 % show images
@@ -115,12 +116,12 @@ clear filename;
 filename = sprintf([conf.imgJuncFile '.png'], matchDir, idSet(1), sampleStage);
 if ~exist(filename, 'file') || conf.overwrite_image
 
-    h_pnts = figure('Name',['Junctions, stage ' num2str(sampleStage)],'Visible', params .debug_visible);
+    h_pnts = figure('Name',['Junctions, stage ' num2str(sampleStage)],'Visible', 'off');% params .debug_visible);
     imshow(pairedImRgb); axis image; axis off; hold on; 
     title(sprintf('Images #%d #%d, stage%d', idSet(1), idSet(2), sampleStage)); 
     plot(juncsIm{1}(:,1),juncsIm{1}(:,2), conf.juncMarker, 'MarkerSize', conf.markerSize);
     plot(juncsIm{2}(:,1)+conf.sizeY+conf.imgGap, juncsIm{2}(:,2), conf.juncMarker, 'MarkerSize', conf.markerSize);
-    naz_plot_paired_edges(edgesIm, conf, 'horizontal');
+    naz_plot_paired_edges(edgesIm, conf);
     
     %if params.debug;      print(h_pnts, '-dpng', sprintf('%s/img%06d_b.png', matchDir, idSet(1)) ); end;
     if params.debug;     saveas(h_pnts, filename, 'png'); end
@@ -186,7 +187,7 @@ clear aiftfilepath fid strline num_matches asiftdir;
 h_match = figure('Name','A-SIFT matches','Visible',params.debug_visible);
 imshow(pairedImRgb); axis image; axis off; hold on;
 title( sprintf('Tentative correspondences: img #%d #%d, stage%d', idSet(1), idSet(2), sampleStage) );
-naz_plot_paired_edges(edgesIm, conf, 'horizontal');
+naz_plot_paired_edges(edgesIm, conf);
 plot(xat,yat,                       conf.siftMarker, 'MarkerSize', conf.markerSize);
 plot(xbt+conf.sizeY+conf.imgGap,ybt,conf.siftMarker, 'MarkerSize', conf.markerSize);
 
@@ -197,7 +198,7 @@ if params.debug_fig; saveas(h_match, sprintf([conf.imgSiftMatchPoint '.fig'], ma
 h_match_h = figure('Name','A-SIFT matches','Visible',params.debug_visible);
 imshow(pairedImRgb); axis image; axis off; hold on;
 title( sprintf('Tentative correspondences: img #%d #%d, stage%d', idSet(1), idSet(2), sampleStage) );
-naz_plot_paired_edges(edgesIm, conf, 'horizontal');
+naz_plot_paired_edges(edgesIm, conf);
 plot(xat,yat,                       conf.siftMarker, 'MarkerSize', conf.markerSize);
 plot(xbt+conf.sizeY+conf.imgGap,ybt,conf.siftMarker, 'MarkerSize', conf.markerSize);
 hl = line([xat; xbt+conf.sizeY+conf.imgGap],[yat; ybt],'color','g');
@@ -205,10 +206,11 @@ hl = line([xat; xbt+conf.sizeY+conf.imgGap],[yat; ybt],'color','g');
 if params.debug;     saveas(h_match_h, sprintf([conf.imgSiftMatchLineH '.png'], matchDir, idSet(1), sampleStage), 'png'); end
 if params.debug_fig; saveas(h_match_h, sprintf([conf.imgSiftMatchLineH '.fig'], matchDir, idSet(1), sampleStage), 'fig'); end
 
-
+EXC = false;
 % Robustly fit homography (removing bad matches)
 % ----------------------------------------------
 % Specify the inlier threshold (in noramlized image co-ordinates)
+% TODO iterating through vector 'thresholds' saves only images in different files, but actual .mat data is overwritten on every iteration
 thresholds = [0.5];
 xah = cell(length(thresholds),1); yah = xah; xbh = xah; ybh = xah;
 for i = 1:length(thresholds)
@@ -218,10 +220,10 @@ try
     [Hab, inliers] = ransacfithomography([xat; yat], [xbt; ybt], t);
     xah{i} = xat(inliers); yah{i} = yat(inliers); xbh{i} = xbt(inliers); ybh{i} = ybt(inliers);
     
-    h_homo = figure('Name',['Fitting homography, threshold = ' num2str(t)],'Visible',params.debug_visible); clf; clf;
+    h_homo = figure('Name',['Fitting homography, threshold = ' num2str(t)],'Visible', params.debug_visible);
     imshow(pairedImRgb); axis image; axis off; hold on;
     title(sprintf('Homography (ransac inliers): img #%d #%d, stg%d (t=%1.1f)', idSet(1), idSet(2), sampleStage, t));
-    naz_plot_paired_edges(edgesIm, conf, 'horizontal');
+    naz_plot_paired_edges(edgesIm, conf);
     plot(xah{i},yah{i},                        conf.siftMarker, 'MarkerSize', conf.markerSize);
     plot(xbh{i}+conf.sizeY+conf.imgGap,ybh{i}, conf.siftMarker, 'MarkerSize', conf.markerSize);
     %plot fitted matches
@@ -230,34 +232,44 @@ try
     if params.debug;     saveas(h_homo, sprintf([conf.imgSiftHomoFile '.png'], matchDir, idSet(1), sampleStage,t), 'png'); end
     if params.debug_fig; saveas(h_homo, sprintf([conf.imgSiftHomoFile '.png'], matchDir, idSet(1), sampleStage,t), 'fig'); end
 catch ME
-    fprintf('Exception in homography: %s\n', ME.message); 
+    fprintf('Exception in homography: %s\n', ME.message);
+    EXC = true;
     continue;
 end
 end
 
+if EXC; continue; end;
 %---------------------------------------------------
-% group regions matches, grouping matrix Rx3, where R number of
+% group regions matches, grouping matrix Rx3, where R number of regionds
 fprintf('Matching regions...\n');
-ti = 1; % just pick some the homogrophy results to perform region matching (ti - index in 'thresholds' array)
+ti = 1; % just pick index in 'thresholds' array, if only one threshold then put 1.
 
 % set(0,'DefaultFigureWindowStyle','docked');
 % h_reg = figure('Name','Region match','Visible',params.debug_visible); clf;
 % imshow(pairedImRgb); axis image; axis off; hold on;
 % title(sprintf('Region matching (based on asift): img #%d #%d', idSet(1), idSet(2)));
-% naz_plot_paired_edges(edgesIm, conf, 'horizontal');
+% naz_plot_paired_edges(edgesIm, conf);
 % plot(xh{1},yh{1},                        '+', 'MarkerSize', conf.markerSize);
 % plot(xh{2}+conf.sizeY+conf.imgGap,yh{2}, '+', 'MarkerSize', conf.markerSize);
 
-for i = 1:2
-xh{i} = xah{ti}; yh{i} = yah{ti};  %#ok<SAGROW>
+for i = 1:2 % i==1 iterting through left image, i==2 - right image
+if i==1
+    xh{i} = xah{ti}; yh{i} = yah{ti};
+else 
+    xh{i} = xbh{ti}; yh{i} = ybh{ti};  
+end
 asiftRegions.bndrInfo{i} = binfo{i};          % boundaryInfo for left  image
 asiftRegions.id(i) = idSet(i);                % image ID
-asiftRegions.asiftInd{i} = [xh{i}; yh{i}];    % coordinates for matched points NB! Keep 2xN size for plot function
-asiftRegions.region2ind{i} = false( length(unique(binfo{i}.imgRegions)), length(xh{i}) );  % matched points per region
+asiftRegions.asiftInd{i} = [xh{i}; yh{i}];    % coordinates for matched points NB! Keep 2xN size for the plot function
+
+% it has size of RxS, where R is number of regions, and S - number of total sift point in the image;
+% matrix contains matched points per region as exhaustive logical vector
+% for all the points (true - point belong to a region, false - does not belong
+asiftRegions.region2ind{i} = false( length(unique(binfo{i}.imgRegions)), length(xh{i}) );  
 
 %TODO
 asiftRegions.regionContour{i} = cell(length(unique(binfo{i}.imgRegions)),1);
-% regionMatch.ind2region{i}  = zeros( length(xh{i}), 1);  % region corresponding to matched point
+% regionMatch.ind2region{i}  = zeros( length(xh{i}), 1);  % TODO region corresponding to matched point
 
     
     
@@ -267,26 +279,35 @@ for r = unique(regions)';
     % fprintf('region = %d\n', r);
     %---------------
     % padding & removing outliers, to supress odd results from 'contour' function (bug?)
-    reg = padarray(regions==r, [1 1]);
-    cont_ini = contourc(double(reg),1);   % inital values botain from 'contour' func, with odd points <1
-    [~, cont_outlier_c] = find(cont_ini<1);
-    cont_c = logical(1:length(cont_ini));
-    cont_c(cont_outlier_c) = false;
-    cont = cont_ini(:,cont_c) - 1; % -1 to compensate coordinates shift because of padding
-    clear cont_outlier cont_outlier_c cont_c;
+%     reg = padarray(regions==r, [1 1]);
+%     cont_ini = contourc(double(reg),1);   % inital values botain from 'contour' func, with odd points <1
+%     [~, cont_outlier_c] = find(cont_ini<1);
+%     cont_c = logical(1:length(cont_ini));
+%     cont_c(cont_outlier_c) = false;
+%     cont = cont_ini(:,cont_c) - 1; % -1 to compensate coordinates shift because of padding
+%     clear cont_outlier cont_outlier_c cont_c;
     %---------------
-    
+    %NEW FIX avoids akward diagonal lines (as was in presentation)
+    reg = regions==r;
+    %padarray(reg, [1 1]);
+    [cont labels] = bwboundaries(reg, 8, 'noholes');
+    lens = cellfun(@length, cont);
+    [~, ind] = max(lens);
+    cont = flipud(cont{ind}');
+
     in = inpolygon( xh{i},yh{i}, cont(1,:),cont(2,:) );
     asiftRegions.region2ind{i}(r,:) = in;
     %TODO  regionMatch.ind2region{i}(  
-    
-%     hc = plot(cont(1,:)+shift, cont(2,:), 'b');
-%     hr = plot(xh{i}(in)+shift, yh{i}(in), 'mo', xh{i}(~in), yh{i}(~in), 'c+');
-%     delete(hr);
-%     delete(hc);
+    annyy = any(in);
+    if annyy
+        hc = plot(cont(1,:)+shift, cont(2,:), 'b');
+        hr = plot(xh{i}(in)+shift, yh{i}(in), 'mo', xh{i}(~in)+shift, yh{i}(~in), 'c+');
+        delete(hr);
+        delete(hc);
+    end
 end
 end
-save(sprintf(conf.asiftRegionFile, matchDir, idSet(1)), 'regionMatch'); 
+save(sprintf(conf.asiftRegionFile, matchDir, idSet(1)), 'asiftRegions'); 
 
 
 % pause;

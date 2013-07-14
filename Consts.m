@@ -30,7 +30,7 @@ consts.supportLabels = [consts.datasetDir '/support_labels.mat'];
 consts.numImages = 1449;
 % consts.numImages = 300000;
 
-consts.useNdx = 1:consts.numImages; % 909:1200 % 100006:100087
+consts.useNdx = 1:500;%consts.numImages; % 909:1200 % 100006:100087
 % consts.useNdx = [ 200001 200005 200008 200011 200012 200014 200016 200017 200019 200022 200024 200025 200027 200033 200035 200038 200040 200042 200044 200045 200047 200049 200057 200058 200059 200062 200063 200064 ];
 consts.useImages = false(consts.numImages, 1);
 consts.useImages(consts.useNdx) = true; 
@@ -228,45 +228,26 @@ consts.segmentDir = 'segmentation_test/';
 consts.matchDir   = [consts.datasetDir 'sift_matched/'];
 consts.matchImgId = {
     [1 2];   % debug info: img1, stg5; regions 44,62, 65 - asift inpolygon (contour?) error
-    3;              
-    4;              
     [5 6];
     [5 6 7];        
-    8;
-    9; 
     [10 11 12];
     [10 11];
-    13;
-    14;
-    15;
     [16 17 18];
     [17 18];
     [19 20];
-    21;
     [22 23];
     [24 25];
     [26 27];
-    28;
-    29;
     [30 31 32];
     [30 31];
     [31 32];
-    33;
-    34;
     [35 36];
     [35 36 37];
     [36 37];
     [37 38];
     [39 40];
     [41 42];
-    43;
     [44 45];
-    46;
-    47;
-    48;
-    49;
-    50;
-    51;
     [52 53];
     [54 55];
     [62 63];
