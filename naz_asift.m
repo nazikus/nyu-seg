@@ -1,4 +1,4 @@
-clear; sclose all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
+clear; close all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
 warning off all;
 
 iptsetpref('ImshowBorder','tight'); %??
@@ -39,7 +39,7 @@ conf.imgGap = 20; % size of gap between the images in pixels
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
 conf.markerSize = 3;
-conf.startFromImgID = 384;
+conf.startFromImgID = 500;
      
 for sampleStage = conf.sampleStages
 for setInd = 1:length(consts.matchImgId)

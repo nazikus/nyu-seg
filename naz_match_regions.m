@@ -57,11 +57,12 @@ for matfile = matlist
     
     % LR=1 - Left-to-Right matching, LR=2 - Right-to-Left matching 
     for LR = 1:2
+    tic;
     I1 = LR;
     I2 = mod(LR,2)+1;  % I2 == 2 if LR == 1, and I2 == 1 if LR == 2
     fprintf('Processing image pair (%d, %d), N(asift)==%d\n', rm.id(I1), rm.id(I2), length(rm.asiftInd{LR}));
     
-    if length(rm.asiftInd{1})>300; % skip images with more then N asift matches
+    if length(rm.asiftInd{1})<400; % skip images with more then N asift matches
         fprintf('Skipping...\n\n');
         continue; 
     end; 
@@ -223,6 +224,7 @@ for matfile = matlist
         % apend found fragment matches to initial mat file
     end
     fprintf('\n ------------------------------------------\n');
+    fprintf('Time passed: %ds\n', round(toc));
     %profile viewer;
     diary([matchDir 'penalized/' 'region_match.log']);
     

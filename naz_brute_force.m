@@ -22,7 +22,7 @@ conf.method = 'bruteforce';
 
 % Must replace below 'consts' field when using A-SIFT
 conf.overwrite_image = true;
-conf.penFile = '%s/img%06d';
+conf.penFile = '%s/img%06d_t%.2f';
 
 %conf.asiftRegionFile   = '%s/asift_match_%06d.mat';  % .mat containing structure with region matching
 matchDir = [consts.matchedDir 'sample0_001/stage_5/'];
@@ -34,7 +34,15 @@ sumWeightedScoreIni = 0;
 sumUnweightedScorePen = 0;
 sumWeightedScorePen = 0;
 count = 0;
+thresholds = [.05];
+
+for t = thresholds
+fprintf('====================================\nStarted with thres=%.2f\n===================\n', t);  
+tic;
+it = 0;
 for matfile = matlist
+warr = zeros(length(matlist), 4);
+it = it + 1;
 clear matchedFragsLR;
 matfile = matfile{1}; %#ok<FXSET>
 load([matchDir matfile]);
@@ -64,19 +72,25 @@ for LR = 1:2
     conf.imgGapStub = zeros(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity (255)
     pairedImRgb = [imRgb{I} conf.imgGapStub imRgb{I}];
     shift = conf.sizeY + conf.imgGap;
-    mmatched = naz_similar_region_fragments(matchedFrags, LR, rm, 0.90);
-    penBnd = naz_remove_fragments(rm.bndrInfo{I}, mmatched);
+    fprintf('Processing image # %d\n', rm.id(I));
+    try
+        mmatched = naz_similar_region_fragments(matchedFrags, I, rm, t);
+        penBnd = naz_remove_fragments(rm.bndrInfo{I}, mmatched);
+    catch ME
+        fprintf('#### ERROR: %s;\n', ME.message);
+        continue;
+    end
 %     penBnd = naz_remove_fragments(rm.bndrInfo{I}, matchedFrags{I}); % original brute-force (brute-brute-force, no similarity used)
     edgesIm{1} = rm.bndrInfo{I}.edges.fragments;
     edgesIm{2} = penBnd.edges.fragments;
     
-    fprintf('Processing image # %d\n', rm.id(I));
     load(sprintf(consts.objectLabelsFilename, rm.id(I)), 'imgObjectLabels');
     load(sprintf(consts.instanceLabelsFilename, rm.id(I)), 'imgInstanceLabels');
     imgRegionsTrue = get_regions_from_labels(imgObjectLabels, imgInstanceLabels); clear imgObjectLabels imgInstanceLabels;
     % ws - weighted score, us - unweighted score, Ini - initial segmentation, Pen - penelaized segmentation
     [wsIni, usIni] = evaluate_segmentation(imgRegionsTrue, rm.bndrInfo{I}.imgRegions);
     [wsPen, usPen] = evaluate_segmentation(imgRegionsTrue, penBnd.imgRegions);
+    warr(it,:) = [wsIni, usIni, wsPen, usPen];
     sumWeightedScoreIni = sumWeightedScoreIni + wsIni;
     sumUnweightedScoreIni = sumUnweightedScoreIni + usIni;
     sumWeightedScorePen = sumWeightedScorePen + wsPen;
@@ -102,14 +116,15 @@ for LR = 1:2
     image([0, conf.sizeY],[0, conf.sizeX], imgRegionsTrue, 'CDataMapping','scaled');
     title('ground truth'), axis image, axis off;
     % image([conf.sizeY+conf.imgGap, conf.sizeY*2+conf.imgGap],[0, conf.sizeX], imgRegionsTrue, 'CDataMapping','scaled');
-    saveas(h_fig, sprintf([conf.penFile '.png'], [matchDir conf.method], rm.id(I)), 'png');
+    saveas(h_fig, sprintf([conf.penFile '.png'], [matchDir conf.method], rm.id(I), t), 'png');
     close(h_fig);
     count = count + 1;
-    fprintf('w ini av = %.2f, uw ini av = %.2f\nw pen av = %.2f, uw pen av = %.2f\n\n', ...
+    fprintf('w ini av = %.3f, uw ini av = %.3f\nw pen av = %.3f, uw pen av = %.3f\n\n', ...
         sumWeightedScoreIni/count, sumUnweightedScoreIni/count, sumWeightedScorePen/count, sumUnweightedScorePen/count);
-    diary([matchDir 'penalized/' 'brute_force.log']);
-
+    diary(sprintf('%sbruteforce/brute_force_t%.2f.log', matchDir, t));
 end
-    
+end
+   save(sprintf('%sbruteforce/weights_t%.2f.mat', matchDir, t), 'warr');
+   fprintf('Threshold t=%.2f finished after %ds\n\n', t, round(toc));
 end
 diary off;
