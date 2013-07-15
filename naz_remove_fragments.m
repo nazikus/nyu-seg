@@ -22,8 +22,8 @@ for k=1:size(fragmentList,1)
     end
 end
 
-% after the previous loop, we have label "gaps",
-% here we will shift (redifine) all the labeling in sequential order
+% after the previous loop, we have labeling "gaps" (e.g. 1 2 3 . 6 7 8)
+% here we will shift (redefine) all the labeling in sequential order
 labels = unique(boundaryOutput.imgRegions);
 for k = 1:length(labels)
     boundaryOutput.imgRegions(boundaryOutput.imgRegions==labels(k)) = k;    

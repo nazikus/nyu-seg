@@ -9,7 +9,7 @@ params.seg.featureSet = consts.BFT_RGBD;
 params.debug = true;
 params.debug_visible = 'off';   
 
-conf.startFromImgID = 1;%173;
+conf.startFromImgID = 35;
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';

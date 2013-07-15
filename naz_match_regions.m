@@ -3,6 +3,7 @@ warning off all
 profile clear
 profile off
 %profile -memory on
+diary on;
 
 iptsetpref('ImshowBorder','tight'); %??
 
@@ -11,20 +12,20 @@ consts.matchedDir   = [consts.datasetDir 'asift_matched/'];
 
 params.seg.featureSet = consts.BFT_RGBD;
 params.debug = true;
-params.debug_visible = 'on';   
+params.debug_visible = 'off';   
 params.debug_fig = false;
 
 % Must replace below 'consts' field when using A-SIFT
 conf.overwrite_image = true;
 conf.imgFile = '%s/img%06d_stg%d_a';
-%conf.asiftRegionFile   = '%s/asift_match_%06d.mat';  % .mat containing structure with region matching
+conf.asiftRegionFile   = '%s/asift_match_%06d.mat';  % .mat containing structure with region matching
 conf.fragPenalizeTotal = '%s/img%06d_xp';            % image pair depicting which fragment to be penalized and the ground truth
 conf.fragPenalize      = '%s/img%06d_%02d_xp';       % image pair depicting which fragment to be penalized and the ground truth, per iteration
 conf.regionLLL         = '%s/img%06d_%02d_xl';       % actual region matching
 conf.regionMMM         = '%s/img%06d_%02d_xm';       % actual region matching
 
 % NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-conf.startFromImgID = 125; %171; %462;
+conf.startFromImgID = 84;
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
@@ -33,7 +34,7 @@ conf.lineWdith = 0.75;
 conf.color = {[0 1 0], [1 1 0], [0 1 1], [1 0 1],[0.65 0.7 0.43], [0.06 0.9 0.4],    [1 0 1], [1 1 0], [0.06 0.9 0.4], [0.65 0.7 0.43], [0 1 0], [1 1 0], [0 1 1], [1 0 1],[0.65 0.7 0.43], [0.06 0.9 0.4],    [1 0 1], [1 1 0], [0.06 0.9 0.4], [0.65 0.7 0.43], [0 1 0], [1 1 0], [0 1 1], [1 0 1],[0.65 0.7 0.43], [0.06 0.9 0.4]};
 desat = @(rgb) hsv2rgb(rgb2hsv(rgb)*[1 0 0; 0 0.6 0; 0 0 1]); % de-saturate - decrease RGB saturation
 
-matchDir = [consts.matchedDir 'sample0_1449/stage_5/'];
+matchDir = [consts.matchedDir 'sample0_001/stage_5/'];
 matlist = dir([matchDir '*.mat']);
 matlist = {matlist.name};
 % ===============================================================================================
@@ -41,7 +42,8 @@ matlist = {matlist.name};
 for matfile = matlist
     matfile = matfile{1}; %#ok<FXSET>
     load([matchDir matfile]);
-    rm = regionMatch; clear regionMatch;  %ar = asiftRegions; clear asiftRegions;
+    % rm = regionMatch; clear regionMatch;  
+    rm = asiftRegions; clear asiftRegions;
     
     if any(rm.id < conf.startFromImgID); continue; end;  % FORCE TO SKIP FIRST N IMAGES (N - conf.startFromImgID);
     for i =1:2
@@ -51,14 +53,19 @@ for matfile = matlist
         edgesIm{i} = rm.bndrInfo{i}.edges.fragments;      %#ok<SAGROW>
         xa{i} = rm.asiftInd{i}(1,:); %#ok<SAGROW> % A-SIFT point-x %#ok<SAGROW>
         ya{i} = rm.asiftInd{i}(2,:); %#ok<SAGROW> % A-SIFT point-y %#ok<SAGROW>
-    end
+    end  
     
     % LR=1 - Left-to-Right matching, LR=2 - Right-to-Left matching 
     for LR = 1:2
     I1 = LR;
     I2 = mod(LR,2)+1;  % I2 == 2 if LR == 1, and I2 == 1 if LR == 2
-    fprintf('Processing image pair (%d, %d)\n', rm.id(I1), rm.id(I2));
+    fprintf('Processing image pair (%d, %d), N(asift)==%d\n', rm.id(I1), rm.id(I2), length(rm.asiftInd{LR}));
     
+    if length(rm.asiftInd{1})>300; % skip images with more then N asift matches
+        fprintf('Skipping...\n\n');
+        continue; 
+    end; 
+
     %if skip already computed
     
     edgesIm = {edgesIm{I1}; edgesIm{I2}};
@@ -86,7 +93,7 @@ for matfile = matlist
 
     regCentriods = regionprops(rm.bndrInfo{I1}.imgRegions, 'Centroid');
     matchedRegions = {}; matchedFrags = {};
-    it = 1; % iterator over regions on the righ image (that have at least 1 match with left image)
+    it = 1; % iterator over regions on the right image (that have at least 1 match with left image)
     for rR = 1:size(rm.region2ind{I2},1)
         inR = rm.region2ind{I2}(rR,:);     
         if ~(any(inR)); continue; end;   % skip if region does not contain asift point
@@ -126,13 +133,14 @@ for matfile = matlist
             continue;
         end
         
-        fprintf('   regionR: %d (iter %d), matchesL: %d\n', rR, it, iter);
+        fprintf('   regionR: %d (iter %d), matchesL: %d, inR: %d, inLt: %d\n', rR, it, iter, sum(inR), sum(cell2mat(inLt)));
         msg_htR = sprintf('%d', sum(inR));
         msg_htL = sprintf('%d', sum(cell2mat(inLt)));
         msg_htLr = sprintf('%d', iter);
         htL  = text(20 + 50,  20, msg_htL,  'Color', [0 0 0], 'FontSize', 13, 'FontWeight', 'Bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle');
         htR  = text(20+shift, 20, msg_htR,  'Color', conf.color{3}, 'FontSize', 16, 'FontWeight', 'Bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle');
         htLr = text(20,       20, msg_htLr, 'Color', [1 .4  0], 'FontSize', 16, 'FontWeight', 'Bold', 'HorizontalAlignment', 'center', 'VerticalAlignment', 'middle');
+        %TODO create dir 'penalized' if absent, so far must be created manually
         saveas(h_fig, sprintf([conf.regionLLL '.png'], [matchDir 'penalized'], rm.id(I1), it), 'png');
 
         for ii = 1:iter; delete(hl{ii});end; clear hl;
@@ -191,7 +199,7 @@ for matfile = matlist
         end
         clear matchedFragsLR matchedFragsRL;
         
-        %%% plot all fragments to be penalized at once in one file
+        %%% plot all fragments at once in file (thos to be penalized)
         title(sprintf('Region penalization for img #%d', rm.id(I1)));
         for k=1:size(matchedFrags,1)
         try
@@ -215,10 +223,11 @@ for matfile = matlist
     end
     fprintf('\n ------------------------------------------\n');
     %profile viewer;
+    diary([matchDir 'penalized/' 'output.txt']);
     
     end
 end
-
+diary off;
 
 % back matching of asifts
 % indif = (inL-inR)>0;

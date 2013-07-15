@@ -3,7 +3,7 @@ function cont = naz_region_contour(bwregion)
     %FIX some awkward bug, incorrect contour sometimes
     
     % padding & removing outliers, to supress odd results from 'contour' function (bug?)
-    reg = padarray(bwregion, [1 1]);
+%     reg = padarray(bwregion, [1 1]);
     [cont labels] = bwboundaries(bwregion, 8, 'noholes');
     lens = cellfun(@length, cont);
     [~, ind] = max(lens);

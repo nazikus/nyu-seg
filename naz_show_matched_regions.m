@@ -25,7 +25,7 @@ conf.markerSize = 2.5;
 conf.startFromImgID = 0;
 conf.color = {'m', 'y', [0.06 0.9 0.4], 'w', 'k'};
 
-matchDir = [consts.matchedDir 'sample0_1449/stage_5/'];
+matchDir = [consts.matchedDir 'sample0_001/stage_5/'];
 matlist = dir([matchDir '*.mat']);
 matlist = {matlist.name};
 % ===============================================================================================
