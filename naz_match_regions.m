@@ -25,7 +25,7 @@ conf.regionLLL         = '%s/img%06d_%02d_xl';       % actual region matching
 conf.regionMMM         = '%s/img%06d_%02d_xm';       % actual region matching
 
 % NB! Do not change this line, change sample size only by changing the range of consts.useNdx!
-conf.startFromImgID = 84;
+conf.startFromImgID = 0;
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
@@ -125,6 +125,7 @@ for matfile = matlist
         iter = iter-1;
         if iter>1
             [matchedFrags{it,1} matchedFrags{it,2}] = naz_get_fragments(matchedRegions{it}, rm.bndrInfo{I1}); %#ok<SAGROW>
+            matchedFrags{it,3} = rR;  % persist which region on the right was matched
         elseif iter == 0
             continue;
         else
@@ -223,7 +224,7 @@ for matfile = matlist
     end
     fprintf('\n ------------------------------------------\n');
     %profile viewer;
-    diary([matchDir 'penalized/' 'output.txt']);
+    diary([matchDir 'penalized/' 'region_match.log']);
     
     end
 end

@@ -12,7 +12,7 @@ for k=1:size(fragmentList,1)
     for p = 1:size(f,1)
         L = f{p}(1);
         ndxs = boundaryOutput.imgRegions == L;
-        boundaryOutput.imgRegions(ndxs) = f{p}(2);
+        boundaryOutput.imgRegions(ndxs) = f{p}(2); %merging regions
         % changing paired labels ahead of fragmentlist accordingly
         for v=p:size(f,1)
             if any(f{v}==L)
@@ -23,7 +23,7 @@ for k=1:size(fragmentList,1)
 end
 
 % after the previous loop, we have labeling "gaps" (e.g. 1 2 3 . 6 7 8)
-% here we will shift (redefine) all the labeling in sequential order
+% here we will shift (redefine) all the labeling so they will have a sequential order
 labels = unique(boundaryOutput.imgRegions);
 for k = 1:length(labels)
     boundaryOutput.imgRegions(boundaryOutput.imgRegions==labels(k)) = k;    

@@ -1,6 +1,7 @@
 clear; clc; close all;  addpath(genpath('.\')); % ind_ = @(A,r,c) A(r,c); 
 warning off all
 iptsetpref('ImshowBorder','tight'); %??
+diary on;
 
 Consts; Params;
 consts.matchedDir   = [consts.datasetDir 'asift_matched/'];
@@ -9,7 +10,7 @@ params.seg.featureSet = consts.BFT_RGBD;
 params.debug = true;
 params.debug_visible = 'off';   
 
-conf.startFromImgID = 35;
+conf.startFromImgID = 0;
 conf.imgGap = 20; % size of gap between the images
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
@@ -24,7 +25,7 @@ conf.overwrite_image = true;
 conf.penFile = '%s/img%06d';
 
 %conf.asiftRegionFile   = '%s/asift_match_%06d.mat';  % .mat containing structure with region matching
-matchDir = [consts.matchedDir 'sample0_1449/stage_5/'];
+matchDir = [consts.matchedDir 'sample0_001/stage_5/'];
 matlist = dir([matchDir '*.mat']);
 matlist = {matlist.name};
 % ===============================================================================================
@@ -34,9 +35,15 @@ sumUnweightedScorePen = 0;
 sumWeightedScorePen = 0;
 count = 0;
 for matfile = matlist
+clear matchedFragsLR;
 matfile = matfile{1}; %#ok<FXSET>
 load([matchDir matfile]);
-rm = regionMatch; clear regionMatch;  %ar = asiftRegions; clear asiftRegions;
+if ~exist('matchedFragsLR','var') || size(matchedFragsLR,2)~=3
+    fprintf('Skipping...\n\n');
+    continue;
+end; % if region matching was skipped for some reason, then ignore it
+
+rm = asiftRegions; clear asiftRegions;
 matchedFrags{1} = matchedFragsLR;
 matchedFrags{2} = matchedFragsRL;
 if any(rm.id < conf.startFromImgID); continue; end;  % FORCE TO SKIP FIRST N IMAGES (N - conf.startFromImgID);
@@ -57,8 +64,9 @@ for LR = 1:2
     conf.imgGapStub = zeros(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity (255)
     pairedImRgb = [imRgb{I} conf.imgGapStub imRgb{I}];
     shift = conf.sizeY + conf.imgGap;
-
-    penBnd = naz_remove_fragments(rm.bndrInfo{I}, matchedFrags{I});
+    mmatched = naz_dissimilar_region_frags(matchedFrags, LR, rm, 0.90);
+    penBnd = naz_remove_fragments(rm.bndrInfo{I}, mmatched);
+%     penBnd = naz_remove_fragments(rm.bndrInfo{I}, matchedFrags{I}); % original brute-force (brute-brute-force, no similarity used)
     edgesIm{1} = rm.bndrInfo{I}.edges.fragments;
     edgesIm{2} = penBnd.edges.fragments;
     
@@ -82,9 +90,9 @@ for LR = 1:2
        conf.method, rm.id(I), wsIni, usIni, wsPen, usPen));
     naz_plot_paired_edges(edgesIm, conf);
     
-    for k=1:size(matchedFrags{I},1)
+    for k=1:size(mmatched,1)
     try
-        naz_plot_fragments(matchedFrags{I}{k,2}, rm.bndrInfo{I}, 0, conf.color{k}, conf.lineWdith );
+        naz_plot_fragments(mmatched{k,2}, rm.bndrInfo{I}, 0, conf.color{k}, conf.lineWdith );
     catch ME
        fprintf('#### ERROR: %s; (Iteration %d)\n', ME.message, k);
     end
@@ -99,6 +107,9 @@ for LR = 1:2
     count = count + 1;
     fprintf('w ini av = %.2f, uw ini av = %.2f\nw pen av = %.2f, uw pen av = %.2f\n\n', ...
         sumWeightedScoreIni/count, sumUnweightedScoreIni/count, sumWeightedScorePen/count, sumUnweightedScorePen/count);
+    diary([matchDir 'penalized/' 'brute_force.log']);
+
 end
     
 end
+diary off;
