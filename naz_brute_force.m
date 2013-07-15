@@ -64,7 +64,7 @@ for LR = 1:2
     conf.imgGapStub = zeros(conf.sizeX, conf.imgGap, 3); % 1 == maximum intensity (255)
     pairedImRgb = [imRgb{I} conf.imgGapStub imRgb{I}];
     shift = conf.sizeY + conf.imgGap;
-    mmatched = naz_dissimilar_region_frags(matchedFrags, LR, rm, 0.90);
+    mmatched = naz_similar_region_fragments(matchedFrags, LR, rm, 0.90);
     penBnd = naz_remove_fragments(rm.bndrInfo{I}, mmatched);
 %     penBnd = naz_remove_fragments(rm.bndrInfo{I}, matchedFrags{I}); % original brute-force (brute-brute-force, no similarity used)
     edgesIm{1} = rm.bndrInfo{I}.edges.fragments;
