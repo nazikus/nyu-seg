@@ -39,7 +39,7 @@ conf.imgGap = 20; % size of gap between the images in pixels
 conf.juncMarker = 'oy';
 conf.siftMarker = 'oc';
 conf.markerSize = 3;
-conf.startFromImgID = 500;
+conf.startFromImgID = 0;
      
 for sampleStage = conf.sampleStages
 for setInd = 1:length(consts.matchImgId)
