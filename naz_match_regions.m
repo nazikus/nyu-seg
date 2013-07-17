@@ -12,7 +12,7 @@ consts.matchedDir   = [consts.datasetDir 'asift_matched/'];
 
 params.seg.featureSet = consts.BFT_RGBD;
 params.debug = true;
-params.debug_visible = 'off';   
+params.debug_visible = 'on';   
 params.debug_fig = false;
 
 % Must replace below 'consts' field when using A-SIFT
@@ -62,7 +62,7 @@ for matfile = matlist
     I2 = mod(LR,2)+1;  % I2 == 2 if LR == 1, and I2 == 1 if LR == 2
     fprintf('Processing image pair (%d, %d), N(asift)==%d\n', rm.id(I1), rm.id(I2), length(rm.asiftInd{LR}));
     
-    if length(rm.asiftInd{1})<400; % skip images with more then N asift matches
+    if length(rm.asiftInd{1})<0; % skip images with more then N asift matches
         fprintf('Skipping...\n\n');
         continue; 
     end; 
